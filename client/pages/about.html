@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>About — ScholarPath</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/main.css">
+  <style>
+    .about-hero{background:linear-gradient(135deg,#0a2a45,#123E63,#1a5a8a);padding:88px 0;text-align:center;position:relative;overflow:hidden}
+    .about-hero::before{content:'';position:absolute;top:-60px;right:-60px;width:400px;height:400px;background:radial-gradient(circle,rgba(62,193,201,.13),transparent 65%)}
+    .about-hero h1{font-size:2.8rem;font-weight:800;color:#fff;margin-bottom:16px}
+    .about-hero h1 em{font-style:normal;color:var(--yellow)}
+    .about-hero p{color:rgba(255,255,255,.75);font-size:1.05rem;max-width:580px;margin:0 auto;line-height:1.75}
+    .mv-grid{display:grid;grid-template-columns:1fr 1fr;gap:32px}
+    .mv-card{border-radius:var(--radius);padding:36px;box-shadow:var(--card-shadow)}
+    .mv-icon{font-size:2.4rem;margin-bottom:16px}
+    .mv-card h3{font-size:1.2rem;font-weight:800;margin-bottom:12px}
+    .mv-card p{font-size:.92rem;line-height:1.8;color:var(--text-muted)}
+    .team-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:24px}
+    .team-card{background:#fff;border-radius:var(--radius);padding:24px;text-align:center;box-shadow:var(--card-shadow);transition:all .2s}
+    .team-card:hover{transform:translateY(-4px)}
+    .team-avatar{width:72px;height:72px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:1.2rem;color:#fff;margin:0 auto 14px}
+    .team-card h4{font-size:.98rem;font-weight:700;color:var(--blue);margin-bottom:4px}
+    .team-card p{font-size:.8rem;color:var(--text-muted)}
+    .team-role{font-size:.75rem;font-weight:600;color:var(--teal);margin-top:6px}
+    .value-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+    .value-card{background:#fff;border-radius:var(--radius);padding:28px;box-shadow:var(--card-shadow);text-align:center}
+    .value-card .icon{font-size:2rem;margin-bottom:14px}
+    .value-card h3{font-size:1rem;font-weight:700;color:var(--blue);margin-bottom:8px}
+    .value-card p{font-size:.86rem;color:var(--text-muted);line-height:1.7}
+    @media(max-width:768px){.mv-grid,.team-grid,.value-grid{grid-template-columns:1fr 1fr}}
+    @media(max-width:480px){.mv-grid,.team-grid,.value-grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+<div id="navbar-placeholder"></div>
+
+<div class="about-hero">
+  <div class="section-inner">
+    <div class="section-label" style="color:var(--yellow)">Our Story</div>
+    <h1>Democratising Access to <em>Education Funding</em></h1>
+    <p>ScholarPath was born from a simple belief: every talented student — regardless of where they were born or what they can afford — deserves a fair shot at world-class education.</p>
+  </div>
+</div>
+
+<!-- Mission & Vision -->
+<section class="section section-light">
+  <div class="section-inner">
+    <div class="section-header">
+      <div class="section-label">Who We Are</div>
+      <h2>Mission &amp; Vision</h2>
+    </div>
+    <div class="mv-grid">
+      <div class="mv-card" style="background:linear-gradient(135deg,#e5f3fc,#c8e8f8)">
+        <div class="mv-icon">🎯</div>
+        <h3 style="color:var(--blue)">Our Mission</h3>
+        <p>To connect every ambitious student with life-changing scholarship opportunities by removing information barriers, simplifying applications, and providing intelligent matching through AI — completely free of charge.</p>
+      </div>
+      <div class="mv-card" style="background:linear-gradient(135deg,#e1f5f7,#c5ecef)">
+        <div class="mv-icon">🌍</div>
+        <h3 style="color:var(--blue)">Our Vision</h3>
+        <p>A world where geography and financial circumstance no longer determine academic potential. Where the brightest minds from Lagos, Nairobi, Dhaka and beyond have equal access to funding opportunities at the world's greatest institutions.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Stats -->
+<section class="section" style="background:var(--blue)">
+  <div class="section-inner">
+    <div class="section-header">
+      <div class="section-label" style="color:var(--yellow)">Our Impact</div>
+      <h2 style="color:#fff">Numbers That Matter</h2>
+      <p style="color:rgba(255,255,255,.7)">Real impact on real students worldwide</p>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:24px;text-align:center">
+      ${[['12,400+','Students Matched'],['$48M+','Awards Facilitated'],['500+','Active Scholarships'],['94%','User Satisfaction']].map(([n,l])=>`
+      <div>
+        <div style="font-family:'Syne',sans-serif;font-size:2.5rem;font-weight:800;color:var(--yellow)">${n}</div>
+        <div style="color:rgba(255,255,255,.7);font-size:.9rem;margin-top:6px">${l}</div>
+      </div>`).join('')}
+    </div>
+  </div>
+</section>
+
+<!-- How it works detail -->
+<section class="section section-light">
+  <div class="section-inner">
+    <div class="section-header">
+      <div class="section-label">The Platform</div>
+      <h2>How ScholarPath Works</h2>
+      <p>A seamless journey from discovery to award</p>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:28px">
+      ${[
+        ['🔍','Smart Search','Filter across 500+ scholarships by country, level, field, funding type and deadline — all in one place.'],
+        ['⚡','AI Matching','Our eligibility algorithm analyses your academic profile and ranks scholarships by how likely you are to qualify.'],
+        ['📋','Easy Applications','Apply directly through ScholarPath. Upload documents once and reuse them across multiple applications.'],
+        ['⏰','Deadline Tracking','Never miss a deadline. Get email reminders at 30, 14, 7 and 3 days before each closing date.'],
+        ['👥','Community Support','Connect with students who have won the scholarships you are applying for. Get real tips from real people.'],
+        ['📊','Real-time Tracking','Monitor every application status in your dashboard — from submitted to under review to outcome.'],
+      ].map(([icon,title,desc])=>`
+      <div style="display:flex;gap:18px;padding:24px;background:var(--bg);border-radius:var(--radius)">
+        <div style="font-size:1.8rem;flex-shrink:0">${icon}</div>
+        <div><h3 style="font-size:1rem;font-weight:700;color:var(--blue);margin-bottom:6px">${title}</h3><p style="font-size:.88rem;color:var(--text-muted);line-height:1.7">${desc}</p></div>
+      </div>`).join('')}
+    </div>
+  </div>
+</section>
+
+<!-- Values -->
+<section class="section">
+  <div class="section-inner">
+    <div class="section-header">
+      <div class="section-label">What Drives Us</div>
+      <h2>Our Core Values</h2>
+    </div>
+    <div class="value-grid">
+      <div class="value-card"><div class="icon">🌐</div><h3>Accessibility</h3><p>Every feature on ScholarPath is free for students, always. No premium tiers, no hidden fees.</p></div>
+      <div class="value-card"><div class="icon">🎯</div><h3>Accuracy</h3><p>We only show scholarships that are currently active and verified. No outdated listings, no misinformation.</p></div>
+      <div class="value-card"><div class="icon">🤝</div><h3>Community</h3><p>We believe collective knowledge is more powerful than any single resource. The community is our backbone.</p></div>
+      <div class="value-card"><div class="icon">🔒</div><h3>Privacy</h3><p>Your data is never sold to advertisers. We use it only to improve your scholarship matches.</p></div>
+      <div class="value-card"><div class="icon">⚡</div><h3>Innovation</h3><p>We continuously improve our AI matching engine based on real scholarship outcome data.</p></div>
+      <div class="value-card"><div class="icon">🌱</div><h3>Impact</h3><p>We measure success in changed lives, not page views. Every scholarship award is a win for all of us.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- Team -->
+<section class="section section-light">
+  <div class="section-inner">
+    <div class="section-header">
+      <div class="section-label">The People</div>
+      <h2>Meet Our Team</h2>
+      <p>Former scholarship recipients who built the platform they wished existed</p>
+    </div>
+    <div class="team-grid">
+      ${[
+        ['AO','Adaeze Okafor','CEO & Co-founder','Gates Cambridge Alum','#123E63'],
+        ['KA','Kwame Asante','CTO & Co-founder','Fulbright Alum','#3EC1C9'],
+        ['FI','Fatima Ibrahim','Head of Partnerships','Chevening Alum','#FF8A1F'],
+        ['JM','James Mensah','Lead Engineer','DAAD Alum','#1a5a8a'],
+      ].map(([init,name,role,note,bg])=>`
+      <div class="team-card">
+        <div class="team-avatar" style="background:${bg}">${init}</div>
+        <h4>${name}</h4>
+        <p style="font-size:.82rem;color:var(--text-muted)">${role}</p>
+        <div class="team-role">${note}</div>
+      </div>`).join('')}
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section style="background:linear-gradient(135deg,var(--orange),#e07000);padding:72px 0;text-align:center">
+  <div class="section-inner">
+    <h2 style="font-size:2.2rem;font-weight:800;color:#fff;margin-bottom:12px">Join the Movement</h2>
+    <p style="color:rgba(255,255,255,.85);margin-bottom:32px;max-width:460px;margin-left:auto;margin-right:auto">12,000 students already trust ScholarPath to find their funding. Your scholarship is waiting.</p>
+    <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap">
+      <a href="register.html" class="btn btn-outline-white btn-lg">Create Free Account</a>
+      <a href="find.html" class="btn btn-lg" style="background:#fff;color:var(--orange)">Browse Scholarships →</a>
+    </div>
+  </div>
+</section>
+
+<div id="footer-placeholder"></div>
+<div id="toast-container"></div>
+<script src="../js/components.js"></script>
+<script src="../js/app.js"></script>
+</body>
+</html>

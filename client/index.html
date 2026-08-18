@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ScholarPath — Find Scholarships Worldwide</title>
+  <meta name="description" content="AI-powered scholarship matching platform. Find and apply for life-changing scholarships worldwide.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/main.css">
+  <style>
+    /* Hero */
+    .hero{background:linear-gradient(135deg,#0a2a45 0%,#123E63 55%,#1a5a8a 100%);padding:88px 0 80px;position:relative;overflow:hidden}
+    .hero::before{content:'';position:absolute;top:-80px;right:-80px;width:500px;height:500px;background:radial-gradient(circle,rgba(62,193,201,.13) 0%,transparent 65%);pointer-events:none}
+    .hero::after{content:'';position:absolute;bottom:-60px;left:8%;width:340px;height:340px;background:radial-gradient(circle,rgba(255,138,31,.1) 0%,transparent 65%);pointer-events:none}
+    .hero-inner{max-width:1100px;margin:0 auto;padding:0 24px;display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center}
+    .hero-badge{display:inline-flex;align-items:center;gap:7px;background:rgba(255,138,31,.18);border:1px solid rgba(255,138,31,.4);color:#FF8A1F;border-radius:20px;padding:5px 15px;font-size:.8rem;font-weight:600;margin-bottom:22px}
+    .hero h1{font-size:3.1rem;font-weight:800;color:#fff;line-height:1.14;margin-bottom:20px}
+    .hero h1 em{font-style:normal;color:#F9C74F}
+    .hero-sub{color:rgba(255,255,255,.76);font-size:1.05rem;line-height:1.75;margin-bottom:36px}
+    .hero-btns{display:flex;gap:14px;flex-wrap:wrap}
+    .hero-stat{display:flex;gap:32px;margin-top:40px;padding-top:32px;border-top:1px solid rgba(255,255,255,.12)}
+    .hero-stat-item .num{font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;color:#fff}
+    .hero-stat-item .lbl{font-size:.78rem;color:rgba(255,255,255,.6);margin-top:2px}
+    /* Float cards */
+    .hero-cards{display:flex;flex-direction:column;gap:14px}
+    .float-card{background:rgba(255,255,255,.1);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.15);border-radius:14px;padding:18px 20px}
+    .float-card-top{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+    .float-org{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:.74rem;font-weight:800;color:#fff;flex-shrink:0}
+    .float-card h4{font-size:.95rem;font-weight:700;color:#fff;margin-bottom:4px}
+    .float-card p{font-size:.8rem;color:rgba(255,255,255,.65);line-height:1.55}
+    .float-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+    .float-tag{background:rgba(255,255,255,.12);color:rgba(255,255,255,.82);border-radius:10px;padding:3px 9px;font-size:.72rem}
+    .float-tag.green{background:rgba(62,193,201,.25);color:#5FDDE5}
+    .float-tag.orange{background:rgba(255,138,31,.25);color:#ffb06b}
+    .match-chip{display:inline-flex;align-items:center;gap:5px;background:rgba(62,193,201,.2);border:1px solid rgba(62,193,201,.35);color:#3EC1C9;border-radius:10px;padding:3px 9px;font-size:.72rem;font-weight:700;margin-top:8px}
+    /* Stats bar */
+    .stats-bar{background:#fff;padding:36px 0;border-bottom:1px solid var(--border)}
+    .stats-inner{max-width:1100px;margin:0 auto;padding:0 24px;display:grid;grid-template-columns:repeat(4,1fr);gap:20px;text-align:center}
+    .stat-item h3{font-family:'Syne',sans-serif;font-size:2.2rem;font-weight:800;color:var(--blue)}
+    .stat-item h3 span{color:var(--orange)}
+    .stat-item p{color:var(--text-muted);font-size:.88rem;margin-top:4px}
+    /* Search hero */
+    .search-hero{background:var(--blue);padding:52px 0}
+    .search-hero-inner{max-width:960px;margin:0 auto;padding:0 24px;text-align:center}
+    .search-hero h2{font-size:1.9rem;font-weight:800;color:#fff;margin-bottom:8px}
+    .search-hero p{color:rgba(255,255,255,.7);margin-bottom:26px}
+    .search-bar{display:flex;background:#fff;border-radius:32px;overflow:hidden;box-shadow:0 8px 36px rgba(0,0,0,.22)}
+    .search-bar input{flex:1;border:none;padding:16px 22px;font-size:.95rem;font-family:inherit;outline:none;color:var(--text)}
+    .search-bar select{border:none;border-left:1px solid var(--border);padding:14px 16px;font-size:.88rem;font-family:inherit;outline:none;color:var(--text-muted);background:#fff;cursor:pointer}
+    .search-bar button{background:var(--orange);color:#fff;border:none;padding:14px 30px;font-size:.95rem;font-weight:700;font-family:'Syne',sans-serif;cursor:pointer;transition:background .2s}
+    .search-bar button:hover{background:var(--orange-light)}
+    .filter-pills{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:20px}
+    .fpill{background:rgba(255,255,255,.14);color:rgba(255,255,255,.84);border:1px solid rgba(255,255,255,.2);border-radius:20px;padding:6px 16px;font-size:.82rem;cursor:pointer;transition:all .2s}
+    .fpill:hover,.fpill.active{background:#fff;color:var(--blue)}
+    /* How it works */
+    .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:32px}
+    .step{background:#fff;border-radius:var(--radius);padding:32px 24px;text-align:center;box-shadow:var(--card-shadow);position:relative}
+    .step-num{width:54px;height:54px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:1.25rem;color:#fff;margin:0 auto 20px}
+    .step h3{font-size:1.05rem;font-weight:700;color:var(--blue);margin-bottom:10px}
+    .step p{color:var(--text-muted);font-size:.88rem;line-height:1.7}
+    /* Testimonials */
+    .testimonials{background:var(--blue);padding:72px 0}
+    .testi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+    .testi-card{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:var(--radius);padding:28px 24px}
+    .testi-card p{color:rgba(255,255,255,.85);font-size:.9rem;line-height:1.75;margin-bottom:18px;font-style:italic}
+    .testi-author{display:flex;align-items:center;gap:12px}
+    .testi-avatar{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;color:#fff}
+    .testi-author h4{font-size:.88rem;font-weight:700;color:#fff}
+    .testi-author p{font-size:.78rem;color:rgba(255,255,255,.55);margin-top:2px}
+    /* CTA */
+    .cta-section{background:linear-gradient(135deg,var(--orange) 0%,#e07000 100%);padding:72px 0;text-align:center}
+    .cta-section h2{font-size:2.3rem;font-weight:800;color:#fff;margin-bottom:12px}
+    .cta-section p{color:rgba(255,255,255,.85);font-size:1rem;margin-bottom:32px;max-width:480px;margin-left:auto;margin-right:auto}
+    /* Cards grid */
+    .cards-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+    @media(max-width:900px){.hero-inner,.cards-grid,.steps,.testi-grid,.stats-inner{grid-template-columns:1fr}.hero-cards{display:none}.hero-stat{gap:20px}}
+  </style>
+</head>
+<body>
+<div id="navbar-placeholder"></div>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-inner">
+    <div>
+      <div class="hero-badge">🌍 500+ Active Scholarships Worldwide</div>
+      <h1>Unlock Your <em>Academic</em> Potential</h1>
+      <p class="hero-sub">Connect with life-changing scholarships from leading universities and organisations worldwide. Let AI match you to opportunities you deserve.</p>
+      <div class="hero-btns">
+        <a href="pages/find.html"    class="btn btn-primary btn-lg">Find Scholarships →</a>
+        <a href="pages/matcher.html" class="btn btn-outline-white btn-lg">Check Eligibility</a>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-item"><div class="num">12,400+</div><div class="lbl">Students Matched</div></div>
+        <div class="hero-stat-item"><div class="num">$48M+</div><div class="lbl">Awards Facilitated</div></div>
+        <div class="hero-stat-item"><div class="num">120+</div><div class="lbl">Partner Orgs</div></div>
+      </div>
+    </div>
+    <div class="hero-cards">
+      <div class="float-card">
+        <div class="float-card-top">
+          <div class="float-org" style="background:#FF8A1F">UN</div>
+          <div>
+            <div style="font-size:.75rem;color:rgba(255,255,255,.6)">UN Development Programme</div>
+            <div class="match-chip">⚡ 94% Match</div>
+          </div>
+        </div>
+        <h4>Global Merit Excellence Award</h4>
+        <p>Full scholarship for outstanding students in developing nations.</p>
+        <div class="float-tags">
+          <span class="float-tag green">Fully Funded</span>
+          <span class="float-tag orange">STEM</span>
+          <span class="float-tag">Masters</span>
+        </div>
+      </div>
+      <div class="float-card">
+        <div class="float-card-top">
+          <div class="float-org" style="background:#3EC1C9">GF</div>
+          <div>
+            <div style="font-size:.75rem;color:rgba(255,255,255,.6)">Gates Foundation</div>
+            <div class="match-chip">⚡ 87% Match</div>
+          </div>
+        </div>
+        <h4>Gates Cambridge Scholarship</h4>
+        <p>Full-cost awards for outstanding applicants from any country outside the UK.</p>
+        <div class="float-tags">
+          <span class="float-tag green">£45,000/yr</span>
+          <span class="float-tag">PhD &amp; Masters</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<div class="stats-bar">
+  <div class="stats-inner">
+    <div class="stat-item"><h3>12<span>,400+</span></h3><p>Students Matched</p></div>
+    <div class="stat-item"><h3>500<span>+</span></h3><p>Active Scholarships</p></div>
+    <div class="stat-item"><h3>$48<span>M+</span></h3><p>Awards Facilitated</p></div>
+    <div class="stat-item"><h3>120<span>+</span></h3><p>Partner Organisations</p></div>
+  </div>
+</div>
+
+<!-- SEARCH -->
+<div class="search-hero">
+  <div class="search-hero-inner">
+    <h2>Find Your Perfect Scholarship</h2>
+    <p>Search across 500+ scholarships from 120+ organisations worldwide</p>
+    <div class="search-bar">
+      <input type="text" id="hero-search" placeholder="Keyword, organisation, field of study...">
+      <select id="hero-field">
+        <option value="">All Fields</option>
+        <option>STEM</option><option>Business</option><option>Medicine</option><option>Arts</option><option>Law</option>
+      </select>
+      <button onclick="goSearch()">Search</button>
+    </div>
+    <div class="filter-pills">
+      <span class="fpill active" onclick="quickFilter(this,'')">All</span>
+      <span class="fpill" onclick="quickFilter(this,'Fully Funded')">Fully Funded</span>
+      <span class="fpill" onclick="quickFilter(this,'STEM')">STEM</span>
+      <span class="fpill" onclick="quickFilter(this,'Undergraduate')">Undergraduate</span>
+      <span class="fpill" onclick="quickFilter(this,'Postgraduate')">Postgraduate</span>
+      <span class="fpill" onclick="quickFilter(this,'Nigeria')">Nigeria</span>
+    </div>
+  </div>
+</div>
+
+<!-- FEATURED SCHOLARSHIPS -->
+<section class="section" style="background:#fff">
+  <div class="section-inner">
+    <div class="section-header">
+      <div class="section-label">Featured Opportunities</div>
+      <h2>Top Scholarships This Month</h2>
+      <p>Hand-picked high-value scholarships for exceptional students</p>
+    </div>
+    <div class="cards-grid" id="featured-grid">
+      <div style="grid-column:1/-1;text-align:center;padding:40px"><div class="spinner" style="margin:0 auto"></div></div>
+    </div>
+    <div style="text-align:center;margin-top:40px">
+      <a href="pages/find.html" class="btn btn-secondary">View All 500+ Scholarships →</a>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="section">
+  <div class="section-inner">
+    <div class="section-header">
+      <div class="section-label">Simple Process</div>
+      <h2>How ScholarPath Works</h2>
+      <p>Three steps to your scholarship journey</p>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num" style="background:var(--orange)">1</div>
+        <h3>Create Your Profile</h3>
+        <p>Sign up and fill in your academic details, field of study, and preferences. Our AI learns your profile instantly.</p>
+      </div>
+      <div class="step">
+        <div class="step-num" style="background:var(--teal)">2</div>
+        <h3>Get AI-Matched</h3>
+        <p>Our intelligent eligibility engine scans 500+ scholarships and ranks the best matches with percentage scores.</p>
+      </div>
+      <div class="step">
+        <div class="step-num" style="background:var(--blue)">3</div>
+        <h3>Apply &amp; Track</h3>
+        <p>Submit applications through the platform and track your status in real-time. Receive automatic deadline reminders.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section class="testimonials">
+  <div class="section-inner">
+    <div class="section-header">
+      <div class="section-label" style="color:var(--yellow)">Success Stories</div>
+      <h2 style="color:#fff">Students Who Made It</h2>
+      <p style="color:rgba(255,255,255,.7)">Real students, real results</p>
+    </div>
+    <div class="testi-grid">
+      <div class="testi-card">
+        <p>"ScholarPath matched me with the Commonwealth Scholarship in minutes. Their AI tool showed me exactly why I was eligible. I'm now studying at University of Edinburgh!"</p>
+        <div class="testi-author">
+          <div class="testi-avatar" style="background:var(--orange)">AO</div>
+          <div><h4>Amira Okonkwo</h4><p>Computer Science · Nigeria → UK</p></div>
+        </div>
+      </div>
+      <div class="testi-card">
+        <p>"I applied to 8 scholarships through the platform. The deadline tracker alone saved me from missing 3 applications. Got the DAAD scholarship — fully funded!"</p>
+        <div class="testi-author">
+          <div class="testi-avatar" style="background:var(--teal)">KA</div>
+          <div><h4>Kwame Asante</h4><p>Engineering · Ghana → Germany</p></div>
+        </div>
+      </div>
+      <div class="testi-card">
+        <p>"The community Q&amp;A helped me write a better personal statement. Seniors who'd been through the Chevening process gave real, specific advice."</p>
+        <div class="testi-author">
+          <div class="testi-avatar" style="background:var(--yellow);color:#8a6800">FI</div>
+          <div><h4>Fatima Ibrahim</h4><p>Policy Studies · Kenya → UK</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="section-inner">
+    <h2>Your Scholarship Awaits</h2>
+    <p>Join 12,000+ students already using ScholarPath. It's completely free.</p>
+    <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap">
+      <a href="pages/register.html" class="btn btn-outline-white btn-lg">Create Free Account</a>
+      <a href="pages/matcher.html"  class="btn" style="background:#fff;color:var(--orange)">Check Eligibility →</a>
+    </div>
+  </div>
+</section>
+
+<div id="footer-placeholder"></div>
+
+<script src="js/components.js"></script>
+<script src="js/app.js"></script>
+<script>
+  async function loadFeatured() {
+    try {
+      const data = await SP.apiFetch('/scholarships?limit=6&sort=views');
+      document.getElementById('featured-grid').innerHTML =
+        data.scholarships.map(s => SP.renderScholarshipCard(s, false)).join('');
+    } catch {
+      // Fallback static cards
+      document.getElementById('featured-grid').innerHTML = `
+        <div class="card sch-card"><div class="card-banner" style="background:#123E63"></div><div class="card-body"><div class="card-org-row"><div style="display:flex;align-items:center;gap:10px"><div class="org-logo" style="background:#123E63">CS</div><div class="org-info"><div class="org-name">Commonwealth Secretariat</div><div class="org-country">UK</div></div></div><span class="deadline-badge deadline-green">🟢 45d left</span></div><h3 class="card-title">Commonwealth Masters Scholarship</h3><p class="card-desc">Full scholarships for postgraduate students from Commonwealth countries to study in the UK...</p><div class="card-tags"><span class="tag tag-blue">Masters</span><span class="tag tag-teal">Any Field</span><span class="tag tag-orange">Fully Funded</span></div></div><div class="card-footer-row"><div><div class="award-amount">£28,000/yr</div><div class="award-label">Award value</div></div><button class="save-btn">🔖 Save</button></div></div>
+        <div class="card sch-card"><div class="card-banner" style="background:#1a5a8a"></div><div class="card-body"><div class="card-org-row"><div style="display:flex;align-items:center;gap:10px"><div class="org-logo" style="background:#1a5a8a">GF</div><div class="org-info"><div class="org-name">Gates Foundation</div><div class="org-country">UK</div></div></div><span class="deadline-badge deadline-red">🔴 12d left</span></div><h3 class="card-title">Gates Cambridge Scholarship</h3><p class="card-desc">Prestigious full-cost awards for outstanding applicants from outside the UK. Highly competitive...</p><div class="card-tags"><span class="tag tag-blue">PhD</span><span class="tag tag-teal">Any Field</span><span class="tag tag-orange">Fully Funded</span></div></div><div class="card-footer-row"><div><div class="award-amount">£50,000/yr</div><div class="award-label">Award value</div></div><button class="save-btn">🔖 Save</button></div></div>
+        <div class="card sch-card"><div class="card-banner" style="background:#c0392b"></div><div class="card-body"><div class="card-org-row"><div style="display:flex;align-items:center;gap:10px"><div class="org-logo" style="background:#c0392b">CV</div><div class="org-info"><div class="org-name">UK Foreign Office</div><div class="org-country">UK</div></div></div><span class="deadline-badge deadline-yellow">🟡 28d left</span></div><h3 class="card-title">Chevening Scholarship</h3><p class="card-desc">Chevening scholarships fund one year taught Masters degree at any UK university...</p><div class="card-tags"><span class="tag tag-blue">Masters</span><span class="tag tag-teal">Any Field</span><span class="tag tag-orange">Fully Funded</span></div></div><div class="card-footer-row"><div><div class="award-amount">£25,000/yr</div><div class="award-label">Award value</div></div><button class="save-btn">🔖 Save</button></div></div>`;
+    }
+  }
+
+  function goSearch() {
+    const kw    = document.getElementById('hero-search').value;
+    const field = document.getElementById('hero-field').value;
+    window.location = `pages/find.html?keyword=${encodeURIComponent(kw)}&field=${encodeURIComponent(field)}`;
+  }
+
+  function quickFilter(el, filter) {
+    document.querySelectorAll('.fpill').forEach(p => p.classList.remove('active'));
+    el.classList.add('active');
+    window.location = `pages/find.html?keyword=${encodeURIComponent(filter)}`;
+  }
+
+  document.getElementById('hero-search')?.addEventListener('keydown', e => { if (e.key === 'Enter') goSearch(); });
+  loadFeatured();
+</script>
+</body>
+</html>

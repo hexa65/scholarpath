@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Dashboard — ScholarPath</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/main.css">
+  <style>
+    body{overflow-x:hidden}
+    .app-item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
+    .app-item:last-child{border-bottom:none}
+    .app-org-logo{width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:.76rem;font-weight:800;color:#fff;flex-shrink:0}
+    .app-info h4{font-size:.88rem;font-weight:600;color:var(--blue)}
+    .app-info p{font-size:.78rem;color:var(--text-muted);margin-top:2px}
+    .deadline-item{display:flex;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid var(--border)}
+    .deadline-item:last-child{border-bottom:none}
+    .d-circle{width:48px;height:48px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0}
+    .d-circle .days{font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:800;line-height:1}
+    .d-circle .lbl{font-size:.58rem;font-weight:700;margin-top:1px}
+    .d-info h4{font-size:.86rem;font-weight:600;color:var(--blue)}
+    .d-info p{font-size:.76rem;color:var(--text-muted);margin-top:2px}
+    .rec-card{display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg);border-radius:var(--radius-sm);margin-bottom:8px;cursor:pointer;transition:all .18s}
+    .rec-card:hover{background:#e2f0f7}
+    .rec-logo{width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:800;color:#fff;flex-shrink:0}
+    .rec-info h4{font-size:.86rem;font-weight:600;color:var(--blue)}
+    .rec-info p{font-size:.76rem;color:var(--text-muted);margin-top:2px}
+    .notif-item{display:flex;align-items:flex-start;gap:10px;padding:12px 0;border-bottom:1px solid var(--border)}
+    .notif-item:last-child{border-bottom:none}
+    .notif-dot{width:8px;height:8px;border-radius:50%;background:var(--teal);flex-shrink:0;margin-top:5px}
+    .notif-item h4{font-size:.87rem;font-weight:600;color:var(--blue)}
+    .notif-item p{font-size:.78rem;color:var(--text-muted);margin-top:2px}
+    .doc-row{display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--bg);border-radius:var(--radius-sm);margin-bottom:8px}
+    .doc-icon{width:36px;height:36px;background:var(--blue);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:.7rem;font-weight:700;flex-shrink:0}
+    .doc-info{flex:1}
+    .doc-info h4{font-size:.87rem;font-weight:600;color:var(--blue)}
+    .doc-info p{font-size:.76rem;color:var(--text-muted)}
+    .chart-bars{display:flex;align-items:flex-end;gap:6px;height:80px;margin-top:12px}
+    .chart-bar{flex:1;border-radius:5px 5px 0 0}
+    .chart-lbl{font-size:.7rem;color:var(--text-muted);text-align:center;margin-top:4px}
+  </style>
+</head>
+<body>
+<div id="navbar-placeholder"></div>
+
+<div class="dash-layout">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-user">
+      <div class="user-avatar" id="s-avatar" style="background:var(--orange)">AS</div>
+      <h4 id="s-name">Loading…</h4>
+      <p id="s-sub">Student</p>
+      <div class="progress-wrap">
+        <div class="progress-lbl"><span>Profile</span><span id="s-pct">0%</span></div>
+        <div class="progress-track"><div class="progress-fill" id="s-prog" style="width:0%"></div></div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-item active" onclick="showPanel('overview',this)"><span class="icon">📊</span> Overview</div>
+      <div class="nav-item" onclick="showPanel('applications',this)"><span class="icon">📋</span> Applications</div>
+      <div class="nav-item" onclick="showPanel('saved',this)"><span class="icon">🔖</span> Saved Scholarships <span class="nav-badge" id="saved-badge">0</span></div>
+      <div class="nav-item" onclick="showPanel('deadlines',this)"><span class="icon">⏰</span> Deadlines <span class="nav-badge" style="background:var(--teal)" id="dl-badge">0</span></div>
+      <div class="nav-item" onclick="showPanel('documents',this)"><span class="icon">📁</span> Documents</div>
+      <div class="nav-item" onclick="showPanel('notifications',this)"><span class="icon">🔔</span> Notifications <span class="nav-badge" id="notif-badge">0</span></div>
+      <div class="nav-item" onclick="showPanel('settings',this)"><span class="icon">⚙️</span> Account Settings</div>
+      <div class="nav-item" onclick="logout()" style="margin-top:auto;color:rgba(255,255,255,.5)"><span class="icon">↩</span> Log Out</div>
+    </nav>
+  </aside>
+
+  <!-- Main -->
+  <main class="dash-main" id="dash-main"></main>
+</div>
+
+<div id="footer-placeholder"></div>
+<div id="toast-container"></div>
+<script src="../js/components.js"></script>
+<script src="../js/app.js"></script>
+<script>
+  // Guard
+  if (!SP.Auth.isLoggedIn()) { window.location = '/pages/login.html'; }
+  if (SP.Auth.role() === 'organization') { window.location = '/pages/org-dashboard.html'; }
+  if (SP.Auth.role() === 'admin') { window.location = '/pages/admin.html'; }
+
+  const user = SP.Auth.getUser();
+  let stats = {}, applications = [], notifications = [], bookmarks = [];
+
+  async function init() {
+    // Populate sidebar
+    const initials = (user?.name || 'US').split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+    document.getElementById('s-avatar').textContent = initials;
+    document.getElementById('s-name').textContent = user?.name || 'Student';
+    document.getElementById('s-sub').textContent = user?.profile?.fieldOfStudy || 'Student';
+
+    try {
+      [stats, applications, notifications, bookmarks] = await Promise.all([
+        SP.apiFetch('/users/dashboard-stats'),
+        SP.apiFetch('/applications/mine'),
+        SP.apiFetch('/notifications'),
+        SP.apiFetch('/users/bookmarks'),
+      ]);
+    } catch {
+      // demo data
+      stats = { saved: 5, total: 4, accepted: 1, pending: 2, review: 1, profileCompletion: 72, upcoming: [] };
+      applications = [
+        {_id:'a1',status:'under_review',scholarship:{title:'Commonwealth Masters',orgName:'Commonwealth Secretariat',deadline:new Date(Date.now()+45*86400000)},createdAt:new Date()},
+        {_id:'a2',status:'accepted',scholarship:{title:'Gates Cambridge',orgName:'Gates Foundation',deadline:new Date(Date.now()+12*86400000)},createdAt:new Date()},
+        {_id:'a3',status:'pending',scholarship:{title:'Chevening Scholarship',orgName:'UK Foreign Office',deadline:new Date(Date.now()+28*86400000)},createdAt:new Date()},
+        {_id:'a4',status:'rejected',scholarship:{title:'Mastercard Foundation',orgName:'Mastercard Foundation',deadline:new Date(Date.now()+60*86400000)},createdAt:new Date()},
+      ];
+      notifications = [
+        {_id:'n1',message:'Your Gates Cambridge application was accepted! 🎉',read:false,createdAt:new Date(),type:'application_update'},
+        {_id:'n2',message:'Deadline alert: Gates Cambridge closes in 12 days',read:false,createdAt:new Date(),type:'deadline'},
+        {_id:'n3',message:'3 new scholarships matched your profile',read:true,createdAt:new Date(),type:'recommendation'},
+      ];
+      bookmarks = [];
+    }
+
+    const pct = stats.profileCompletion || 0;
+    document.getElementById('s-prog').style.width = pct + '%';
+    document.getElementById('s-pct').textContent = pct + '%';
+    document.getElementById('saved-badge').textContent = stats.saved || 0;
+    document.getElementById('dl-badge').textContent = stats.upcoming?.length || 0;
+    document.getElementById('notif-badge').textContent = notifications.filter(n=>!n.read).length;
+
+    showPanel('overview', document.querySelector('.nav-item'));
+  }
+
+  function showPanel(name, el) {
+    document.querySelectorAll('.sidebar .nav-item').forEach(i=>i.classList.remove('active'));
+    if (el) el.classList.add('active');
+    const main = document.getElementById('dash-main');
+
+    if (name === 'overview') {
+      main.innerHTML = `
+      <div class="dash-top">
+        <div><h2>Good day, ${user?.name?.split(' ')[0] || 'Scholar'}! 👋</h2><p>${applications.filter(a=>a.status==='pending'||a.status==='under_review').length} applications in progress · ${notifications.filter(n=>!n.read).length} unread notifications</p></div>
+        <button class="btn btn-secondary btn-sm" onclick="window.location='matcher.html'">⚡ Find More Matches</button>
+      </div>
+      <div class="stat-grid">
+        <div class="stat-box"><div class="stat-icon" style="background:#e5f0fb">🎓</div><h3>${stats.saved||0}</h3><p>Saved Scholarships</p></div>
+        <div class="stat-box"><div class="stat-icon" style="background:#e4f9ee">📋</div><h3>${stats.total||0}</h3><p>Applications</p><div class="trend trend-up">↑ ${stats.accepted||0} accepted</div></div>
+        <div class="stat-box"><div class="stat-icon" style="background:#fff3e5">⏰</div><h3>${stats.upcoming?.length||0}</h3><p>Upcoming Deadlines</p></div>
+        <div class="stat-box"><div class="stat-icon" style="background:#fef8e1">⭐</div><h3>94%</h3><p>Top Match Score</p><div class="trend trend-up">Commonwealth</div></div>
+      </div>
+      <div class="two-col">
+        <div class="panel">
+          <div class="panel-head"><h3>Recent Applications</h3><a href="#" onclick="showPanel('applications',null)">View all →</a></div>
+          ${applications.slice(0,4).map(a => `
+          <div class="app-item">
+            <div class="app-org-logo" style="background:${orgColor(a.scholarship?.orgName)}">${orgCode(a.scholarship?.orgName)}</div>
+            <div class="app-info flex-1"><h4>${a.scholarship?.title||'Scholarship'}</h4><p>${a.scholarship?.orgName||''}${a.createdAt?' · Applied '+new Date(a.createdAt).toLocaleDateString():''}</p></div>
+            <span class="status status-${a.status==='under_review'?'review':a.status}">${statusLabel(a.status)}</span>
+          </div>`).join('') || '<p style="color:var(--text-muted);font-size:.88rem;padding:10px 0">No applications yet. <a href="find.html">Browse scholarships →</a></p>'}
+        </div>
+        <div class="panel">
+          <div class="panel-head"><h3>Upcoming Deadlines</h3><a href="#" onclick="showPanel('deadlines',null)">Full calendar →</a></div>
+          ${applications.filter(a=>a.scholarship?.deadline && new Date(a.scholarship.deadline) > new Date()).sort((a,b)=>new Date(a.scholarship.deadline)-new Date(b.scholarship.deadline)).slice(0,4).map(a => {
+            const d = SP.daysUntil(a.scholarship.deadline);
+            const cls = SP.deadlineClass(d);
+            const bg = cls==='deadline-red'?'#fff0ef':cls==='deadline-yellow'?'#fffaee':'#edfaf3';
+            const tc = cls==='deadline-red'?'#c0392b':cls==='deadline-yellow'?'#8a6800':'#1a7a4a';
+            return `<div class="deadline-item"><div class="d-circle" style="background:${bg}"><div class="days" style="color:${tc}">${d}</div><div class="lbl" style="color:${tc}">DAYS</div></div><div class="d-info"><h4>${a.scholarship?.title||'Scholarship'}</h4><p>${a.scholarship?.orgName||''}</p></div></div>`;
+          }).join('') || '<p style="color:var(--text-muted);font-size:.88rem;padding:10px 0">No upcoming deadlines.</p>'}
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h3>Recommended For You</h3><a href="matcher.html">View all matches →</a></div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+          ${[{t:'Commonwealth Scholarship',org:'UK',c:'#123E63',m:94},{t:'Chevening Scholarship',org:'UK',c:'#c0392b',m:91},{t:'Fulbright Program',org:'USA',c:'#2c3e50',m:82}].map(r=>`
+          <div class="rec-card" onclick="window.location='find.html'">
+            <div class="rec-logo" style="background:${r.c}">${r.org}</div>
+            <div class="rec-info"><h4>${r.t}</h4><p><span style="color:var(--teal);font-weight:700">${r.m}%</span> match</p></div>
+          </div>`).join('')}
+        </div>
+      </div>`;
+    }
+
+    else if (name === 'applications') {
+      const STATUS_LABELS = {pending:'Pending',under_review:'Under Review',accepted:'Accepted ✓',rejected:'Not Selected'};
+      main.innerHTML = `
+      <div class="dash-top"><div><h2>My Applications 📋</h2><p>Track all your scholarship applications</p></div></div>
+      <div class="panel">
+        <div class="panel-head"><h3>All Applications (${applications.length})</h3></div>
+        ${!applications.length ? '<p style="color:var(--text-muted);padding:20px 0">No applications yet. <a href="find.html" style="color:var(--teal)">Find scholarships →</a></p>' :
+        `<table style="width:100%;border-collapse:collapse">
+          <thead><tr style="border-bottom:2px solid var(--border)">${['Scholarship','Organisation','Applied','Status',''].map(h=>`<th style="text-align:left;padding:10px 0;font-size:.82rem;color:var(--text-muted);font-weight:600">${h}</th>`).join('')}</tr></thead>
+          <tbody>${applications.map(a=>`
+          <tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:12px 0;font-weight:600;font-size:.9rem;color:var(--blue)">${a.scholarship?.title||'—'}</td>
+            <td style="padding:12px 0;font-size:.85rem;color:var(--text-muted)">${a.scholarship?.orgName||'—'}</td>
+            <td style="padding:12px 0;font-size:.82rem;color:var(--text-muted)">${new Date(a.createdAt).toLocaleDateString()}</td>
+            <td style="padding:12px 0"><span class="status status-${a.status==='under_review'?'review':a.status}">${STATUS_LABELS[a.status]||a.status}</span></td>
+            <td style="padding:12px 0"><button class="btn btn-secondary btn-sm" onclick="SP.Toast.success('Opening application details…')">View</button></td>
+          </tr>`).join('')}</tbody>
+        </table>`}
+      </div>`;
+    }
+
+    else if (name === 'notifications') {
+      main.innerHTML = `
+      <div class="dash-top"><div><h2>Notifications 🔔</h2><p>${notifications.filter(n=>!n.read).length} unread</p></div>
+        <button class="btn btn-secondary btn-sm" onclick="SP.apiFetch('/notifications/read',{method:'POST'}).then(()=>SP.Toast.success('All marked as read'))">Mark all read</button>
+      </div>
+      <div class="panel">
+        ${notifications.map(n=>`
+        <div class="notif-item">
+          <div class="notif-dot" style="background:${n.read?'var(--border)':'var(--teal)'}"></div>
+          <div><h4>${n.message}</h4><p>${new Date(n.createdAt).toLocaleDateString()} · ${n.type?.replace('_',' ')}</p></div>
+        </div>`).join('') || '<p style="color:var(--text-muted);padding:20px 0">No notifications yet.</p>'}
+      </div>`;
+    }
+
+    else if (name === 'documents') {
+      const docs = [
+        {name:'Academic Transcript',size:'2.4MB',date:'Mar 1, 2025',icon:'📄'},
+        {name:'CV / Résumé',size:'890KB',date:'Mar 5, 2025',icon:'📄'},
+        {name:'Personal Statement',size:'1.1MB',date:'Mar 8, 2025',icon:'📄'},
+        {name:'Reference Letter',size:'670KB',date:'Apr 2, 2025',icon:'📄'},
+      ];
+      main.innerHTML = `
+      <div class="dash-top"><div><h2>Documents 📁</h2><p>Manage your scholarship application files</p></div>
+        <button class="btn btn-primary btn-sm" onclick="document.getElementById('file-input').click()">+ Upload File</button>
+      </div>
+      <input type="file" id="file-input" style="display:none" accept=".pdf,.doc,.docx,.jpg,.png" onchange="uploadFile(this)">
+      <div class="panel">
+        <div class="panel-head"><h3>Uploaded Documents (${docs.length})</h3></div>
+        ${docs.map(d=>`<div class="doc-row"><div class="doc-icon">${d.icon}</div><div class="doc-info"><h4>${d.name}</h4><p>${d.size} · Uploaded ${d.date}</p></div><button class="btn btn-sm" style="background:none;border:1.5px solid var(--border);color:var(--text-muted);border-radius:8px;padding:5px 12px" onclick="SP.Toast.show('File removed','success')">Remove</button></div>`).join('')}
+        <div style="margin-top:18px;padding:28px;border:2px dashed var(--border);border-radius:var(--radius-sm);text-align:center;color:var(--text-muted)">
+          <div style="font-size:2rem;margin-bottom:8px">📤</div>
+          <p style="font-size:.9rem;margin-bottom:10px">Drag & drop files here, or <a href="#" onclick="document.getElementById('file-input').click();return false" style="color:var(--teal);font-weight:600">click to browse</a></p>
+          <p style="font-size:.78rem">Accepted: PDF, DOC, DOCX, JPG, PNG · Max 10MB</p>
+        </div>
+      </div>`;
+    }
+
+    else if (name === 'settings') {
+      const p = user?.profile || {};
+      main.innerHTML = `
+      <div class="dash-top"><div><h2>Account Settings ⚙️</h2><p>Update your profile and preferences</p></div></div>
+      <div class="two-col">
+        <div class="panel">
+          <div class="panel-head"><h3>Personal Information</h3></div>
+          <div class="form-group"><label class="form-label">Full Name</label><input class="form-control" value="${user?.name||''}" id="s-fullname"></div>
+          <div class="form-group"><label class="form-label">Email</label><input class="form-control" type="email" value="${user?.email||''}" id="s-email" readonly style="opacity:.7"></div>
+          <div class="form-group"><label class="form-label">Country</label><input class="form-control" value="${p.country||''}" id="s-country" placeholder="Nigeria"></div>
+          <div class="form-group"><label class="form-label">Field of Study</label><input class="form-control" value="${p.fieldOfStudy||''}" id="s-field" placeholder="Economics"></div>
+          <div class="form-group"><label class="form-label">Bio</label><textarea class="form-control" rows="3" id="s-bio" placeholder="Tell us about yourself…">${p.bio||''}</textarea></div>
+          <button class="btn btn-primary" onclick="saveProfile()">Save Changes</button>
+        </div>
+        <div>
+          <div class="panel" style="margin-bottom:16px">
+            <div class="panel-head"><h3>Change Password</h3></div>
+            <div class="form-group"><label class="form-label">Current Password</label><input type="password" class="form-control" id="cur-pwd"></div>
+            <div class="form-group"><label class="form-label">New Password</label><input type="password" class="form-control" id="new-pwd"></div>
+            <div class="form-group"><label class="form-label">Confirm New Password</label><input type="password" class="form-control" id="conf-pwd"></div>
+            <button class="btn btn-secondary" onclick="changePwd()">Update Password</button>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><h3>Notifications</h3></div>
+            <label class="check-filter" style="margin-bottom:10px"><input type="checkbox" checked> Email deadline reminders</label>
+            <label class="check-filter" style="margin-bottom:10px"><input type="checkbox" checked> New scholarship matches</label>
+            <label class="check-filter"><input type="checkbox" checked> Application status updates</label>
+            <button class="btn btn-secondary btn-sm" style="margin-top:14px" onclick="SP.Toast.success('Preferences saved!')">Save Preferences</button>
+          </div>
+        </div>
+      </div>`;
+    }
+
+    else if (name === 'saved') {
+      main.innerHTML = `
+      <div class="dash-top"><div><h2>Saved Scholarships 🔖</h2><p>${stats.saved||0} scholarships saved</p></div></div>
+      <div id="saved-grid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:20px">
+        ${bookmarks.length
+          ? bookmarks.map(s => SP.renderScholarshipCard(s, false)).join('')
+          : `<div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--text-muted)">
+              <div style="font-size:3rem;margin-bottom:14px">🔖</div>
+              <h3 style="color:var(--blue);margin-bottom:8px">No saved scholarships yet</h3>
+              <p>Browse scholarships and click "Save" to track them here.</p>
+              <a href="find.html" class="btn btn-primary" style="margin-top:20px;display:inline-flex">Browse Scholarships →</a>
+            </div>`}
+      </div>`;
+    }
+
+    else if (name === 'deadlines') {
+      main.innerHTML = `
+      <div class="dash-top"><div><h2>Deadline Tracker ⏰</h2><p>Stay on top of upcoming scholarship deadlines</p></div></div>
+      <div class="panel">
+        <div class="panel-head"><h3>Your Application Deadlines</h3></div>
+        ${applications.filter(a=>a.scholarship?.deadline).sort((a,b)=>new Date(a.scholarship.deadline)-new Date(b.scholarship.deadline)).map(a=>{
+          const d = SP.daysUntil(a.scholarship.deadline);
+          const cls = SP.deadlineClass(d);
+          const bg = cls==='deadline-red'?'#fff0ef':cls==='deadline-yellow'?'#fffaee':'#edfaf3';
+          const tc = cls==='deadline-red'?'#c0392b':cls==='deadline-yellow'?'#8a6800':'#1a7a4a';
+          return `<div class="deadline-item">
+            <div class="d-circle" style="background:${bg}"><div class="days" style="color:${tc}">${Math.max(0,d)}</div><div class="lbl" style="color:${tc}">DAYS</div></div>
+            <div class="d-info flex-1"><h4>${a.scholarship?.title||'Scholarship'}</h4><p>Deadline: ${new Date(a.scholarship.deadline).toLocaleDateString()} · ${a.scholarship?.orgName||''}</p></div>
+            <span class="status status-${a.status==='under_review'?'review':a.status}">${a.status}</span>
+          </div>`;
+        }).join('') || '<p style="color:var(--text-muted);padding:20px 0">No deadlines to track. Apply to scholarships to see them here.</p>'}
+      </div>`;
+    }
+  }
+
+  // Helpers
+  const ORG_COLORS = {'Commonwealth Secretariat':'#123E63','Gates Foundation':'#1a5a8a','UK Foreign Office':'#c0392b','Mastercard Foundation':'#FF8A1F','DAAD':'#3EC1C9','U.S. State Dept':'#2c3e50'};
+  function orgColor(n) { return ORG_COLORS[n] || '#123E63'; }
+  function orgCode(n)  { return (n||'ORG').substring(0,2).toUpperCase(); }
+  function statusLabel(s) { return {pending:'Pending',under_review:'Under Review',accepted:'Accepted ✓',rejected:'Not Selected'}[s]||s; }
+
+  async function saveProfile() {
+    try {
+      await SP.apiFetch('/users/profile', { method:'PUT', body: JSON.stringify({ name: document.getElementById('s-fullname')?.value, profile: { country: document.getElementById('s-country')?.value, fieldOfStudy: document.getElementById('s-field')?.value, bio: document.getElementById('s-bio')?.value } }) });
+      SP.Toast.success('Profile saved!');
+    } catch(e) { SP.Toast.error(e.message); }
+  }
+
+  async function changePwd() {
+    const cur = document.getElementById('cur-pwd')?.value;
+    const np  = document.getElementById('new-pwd')?.value;
+    const cp  = document.getElementById('conf-pwd')?.value;
+    if (np !== cp) { SP.Toast.error('New passwords do not match'); return; }
+    try {
+      await SP.apiFetch('/users/password', { method:'PUT', body: JSON.stringify({ currentPassword: cur, newPassword: np }) });
+      SP.Toast.success('Password updated!');
+    } catch(e) { SP.Toast.error(e.message); }
+  }
+
+  async function uploadFile(input) {
+    const file = input.files[0]; if (!file) return;
+    const fd = new FormData(); fd.append('file', file);
+    try {
+      await fetch(`${window.SP_API_BASE||'http://localhost:5000/api'}/uploads`, { method:'POST', headers:{ Authorization:`Bearer ${SP.Auth.getToken()}` }, body: fd });
+      SP.Toast.success('File uploaded!');
+    } catch(e) { SP.Toast.error('Upload failed'); }
+  }
+
+  init();
+</script>
+</body>
+</html>

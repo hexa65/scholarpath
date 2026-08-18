@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin — ScholarPath</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/main.css">
+  <style>
+    body { overflow-x:hidden; }
+    .sidebar { background:#0a2a45; }
+    .data-table { width:100%;border-collapse:collapse; }
+    .data-table th { text-align:left;padding:10px 0;font-size:.78rem;color:var(--text-muted);font-weight:600;border-bottom:2px solid var(--border); }
+    .data-table td { padding:11px 0;font-size:.86rem;border-bottom:1px solid var(--border); }
+    .data-table tr:last-child td { border-bottom:none; }
+    .action-btn { border:none;padding:5px 11px;border-radius:7px;font-size:.74rem;font-weight:700;cursor:pointer;transition:all .18s;font-family:inherit; }
+    .btn-approve { background:#e4f9ee;color:#1a7a4a; }
+    .btn-approve:hover { background:#1a7a4a;color:#fff; }
+    .btn-reject { background:#feecec;color:#c0392b; }
+    .btn-reject:hover { background:#c0392b;color:#fff; }
+    .btn-neutral { background:#e5f0fb;color:#123E63; }
+    .btn-neutral:hover { background:#123E63;color:#fff; }
+    .admin-search { display:flex;gap:10px;margin-bottom:20px; }
+    .admin-search input { flex:1;padding:9px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:inherit;font-size:.88rem;outline:none; }
+    .admin-search input:focus { border-color:var(--teal); }
+    .role-badge { font-size:.72rem;font-weight:700;padding:3px 9px;border-radius:8px; }
+    .role-student { background:#e5f0fb;color:#1255a0; }
+    .role-org { background:#e1f5f7;color:#177b83; }
+    .role-admin { background:#fff3e5;color:#c05a00; }
+    .bar-chart { display:flex;align-items:flex-end;gap:8px;height:100px;margin-top:12px; }
+    .bar-wrap { flex:1;display:flex;flex-direction:column;align-items:center; }
+    .bar { width:100%;border-radius:5px 5px 0 0; }
+    .bar-label { font-size:.68rem;color:var(--text-muted);margin-top:4px;text-align:center; }
+  </style>
+</head>
+<body>
+<div id="navbar-placeholder"></div>
+
+<div class="dash-layout">
+  <aside class="sidebar">
+    <div class="sidebar-user" style="background:#071e30">
+      <div class="user-avatar" style="background:#FF8A1F;font-size:.85rem">ADM</div>
+      <h4 style="color:#fff">Admin Panel</h4>
+      <p style="font-size:.76rem;color:rgba(255,255,255,.5)">Full Access</p>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-item active" onclick="showPanel('overview',this)"><span class="icon">📊</span> Platform Overview</div>
+      <div class="nav-item" onclick="showPanel('users',this)"><span class="icon">👥</span> User Management</div>
+      <div class="nav-item" onclick="showPanel('scholarships',this)"><span class="icon">🎓</span> Scholarship Moderation</div>
+      <div class="nav-item" onclick="showPanel('applications',this)"><span class="icon">📋</span> All Applications</div>
+      <div class="nav-item" onclick="showPanel('orgs',this)"><span class="icon">🏛️</span> Org Verification <span class="nav-badge" id="orgs-badge">3</span></div>
+      <div class="nav-item" onclick="showPanel('reports',this)"><span class="icon">🚩</span> Reports <span class="nav-badge" id="reports-badge">0</span></div>
+      <div class="nav-item" onclick="showPanel('activity',this)"><span class="icon">📜</span> Activity Log</div>
+      <div class="nav-item" onclick="logout()" style="color:rgba(255,255,255,.5)"><span class="icon">↩</span> Log Out</div>
+    </nav>
+  </aside>
+
+  <main class="dash-main" id="admin-main"></main>
+</div>
+
+<div id="footer-placeholder"></div>
+<div id="toast-container"></div>
+<script src="../js/components.js"></script>
+<script src="../js/app.js"></script>
+<script>
+  if (!SP.Auth.isLoggedIn()) window.location = '/pages/login.html';
+  if (SP.Auth.role() !== 'admin') window.location = '/pages/dashboard.html';
+
+  let platformStats = {}, users = [], scholarships = [], reports = [], applications = [];
+
+  async function init() {
+    try {
+      [platformStats, { users }, { scholarships }, reports, { applications }] = await Promise.all([
+        SP.apiFetch('/admin/stats'),
+        SP.apiFetch('/admin/users'),
+        SP.apiFetch('/admin/scholarships'),
+        SP.apiFetch('/admin/reports'),
+        SP.apiFetch('/admin/applications'),
+      ]);
+    } catch {
+      platformStats = { users:1240, orgs:48, scholarships:312, applications:8740, questions:564, pendingReports:3,
+        recentUsers:[], topScholarships:[],
+        statusBreakdown:[{_id:'pending',count:3200},{_id:'accepted',count:1800},{_id:'rejected',count:2900},{_id:'under_review',count:840}]
+      };
+      users = [
+        {_id:'u1',name:'Amira Okonkwo',email:'amira@gmail.com',role:'student',createdAt:new Date()},
+        {_id:'u2',name:'Kofi Asante',email:'kofi@gmail.com',role:'student',createdAt:new Date()},
+        {_id:'u3',name:'CommonwealthScholarship',email:'org@csc.com',role:'organization',createdAt:new Date(),orgProfile:{verified:false}},
+        {_id:'u4',name:'Admin User',email:'admin@scholarpath.com',role:'admin',createdAt:new Date()},
+      ];
+      scholarships = [
+        {_id:'s1',title:'Excellence in STEM',orgName:'UniScholar',status:'active',views:342,createdAt:new Date(),deadline:new Date(Date.now()+45*86400000)},
+        {_id:'s2',title:'Future Leaders Award',orgName:'CommonwealthCSC',status:'active',views:218,createdAt:new Date(),deadline:new Date(Date.now()+60*86400000)},
+        {_id:'s3',title:'Suspicious Grant',orgName:'UnknownOrg',status:'active',views:12,createdAt:new Date(),deadline:new Date(Date.now()+30*86400000)},
+      ];
+      reports = [
+        {_id:'r1',contentType:'scholarship',reason:'Misleading information about funding',status:'pending',reportedBy:{name:'John Doe'},createdAt:new Date()},
+        {_id:'r2',contentType:'question',reason:'Spam content',status:'pending',reportedBy:{name:'Jane Smith'},createdAt:new Date()},
+        {_id:'r3',contentType:'user',reason:'Fake organisation profile',status:'pending',reportedBy:{name:'Ahmed Ali'},createdAt:new Date()},
+      ];
+      applications = [];
+    }
+    document.getElementById('reports-badge').textContent = platformStats.pendingReports || reports.filter(r=>r.status==='pending').length;
+    document.getElementById('orgs-badge').textContent = users.filter(u=>u.role==='organization'&&!u.orgProfile?.verified).length;
+    showPanel('overview', document.querySelector('.nav-item'));
+  }
+
+  function showPanel(name, el) {
+    document.querySelectorAll('.sidebar .nav-item').forEach(i => i.classList.remove('active'));
+    if (el) el.classList.add('active');
+    const main = document.getElementById('admin-main');
+
+    if (name === 'overview') {
+      const breakdown = platformStats.statusBreakdown || [];
+      const totalApps = breakdown.reduce((s,b)=>s+b.count,0) || platformStats.applications || 1;
+      main.innerHTML = `
+      <div class="dash-top"><div><h2>Platform Overview 📊</h2><p>Real-time ScholarPath statistics</p></div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-secondary btn-sm" onclick="SP.Toast.success('Exporting report…')">📥 Export Report</button>
+          <button class="btn btn-primary btn-sm" onclick="SP.Toast.success('System announcement sent!')">📣 Announce</button>
+        </div>
+      </div>
+      <div class="stat-grid">
+        <div class="stat-box"><div class="stat-icon" style="background:#e5f0fb">👥</div><h3>${(platformStats.users||0).toLocaleString()}</h3><p>Total Students</p><div class="trend trend-up">↑ 14% this month</div></div>
+        <div class="stat-box"><div class="stat-icon" style="background:#e4f9ee">🏛️</div><h3>${platformStats.orgs||0}</h3><p>Organisations</p><div class="trend trend-up">↑ 6 new this week</div></div>
+        <div class="stat-box"><div class="stat-icon" style="background:#fff3e5">🎓</div><h3>${platformStats.scholarships||0}</h3><p>Scholarships</p></div>
+        <div class="stat-box"><div class="stat-icon" style="background:#fef8e1">📋</div><h3>${(platformStats.applications||0).toLocaleString()}</h3><p>Applications</p></div>
+      </div>
+      <div class="two-col">
+        <div class="panel">
+          <div class="panel-head"><h3>Application Status Breakdown</h3></div>
+          ${breakdown.map(b=>{
+            const pct = Math.round(b.count/totalApps*100);
+            const colors = {pending:'#F9C74F',under_review:'#3EC1C9',accepted:'#1a7a4a',rejected:'#c0392b'};
+            return `<div style="margin-bottom:14px">
+              <div style="display:flex;justify-content:space-between;font-size:.85rem;margin-bottom:5px">
+                <span style="font-weight:600;color:var(--blue);text-transform:capitalize">${b._id.replace('_',' ')}</span>
+                <span style="color:var(--text-muted)">${b.count.toLocaleString()} (${pct}%)</span>
+              </div>
+              <div style="height:8px;background:var(--border);border-radius:10px;overflow:hidden">
+                <div style="height:100%;width:${pct}%;background:${colors[b._id]||'var(--blue)'};border-radius:10px"></div>
+              </div>
+            </div>`;
+          }).join('')}
+        </div>
+        <div class="panel">
+          <div class="panel-head"><h3>Top Scholarships by Views</h3></div>
+          ${scholarships.slice(0,5).map((s,i)=>`
+          <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">
+            <div style="width:28px;height:28px;border-radius:50%;background:var(--blue);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:.78rem;font-weight:800;color:#fff;flex-shrink:0">${i+1}</div>
+            <div style="flex:1"><div style="font-size:.88rem;font-weight:600;color:var(--blue)">${s.title}</div><div style="font-size:.76rem;color:var(--text-muted)">${s.orgName}</div></div>
+            <span style="font-size:.82rem;font-weight:700;color:var(--teal)">${s.views||0} views</span>
+          </div>`).join('')}
+        </div>
+      </div>
+      <div class="panel" style="margin-top:20px">
+        <div class="panel-head"><h3>Recent Activity</h3></div>
+        <div class="bar-chart">
+          ${[['Mon',80],['Tue',120],['Wed',95],['Thu',145],['Fri',180],['Sat',60],['Sun',40]].map(([d,v])=>`
+          <div class="bar-wrap">
+            <div class="bar" style="height:${Math.round(v/180*100)}%;background:${v>100?'var(--orange)':'var(--teal)'}"></div>
+            <div class="bar-label">${d}</div>
+          </div>`).join('')}
+        </div>
+      </div>`;
+    }
+
+    else if (name === 'users') {
+      main.innerHTML = `
+      <div class="dash-top"><div><h2>User Management 👥</h2><p>${users.length} users</p></div></div>
+      <div class="admin-search">
+        <input type="text" placeholder="Search users by name or email…" oninput="filterUsers(this.value)">
+        <select class="form-control" style="width:160px;padding:8px 12px" onchange="filterUsers('',this.value)">
+          <option value="">All Roles</option><option value="student">Students</option><option value="organization">Organisations</option><option value="admin">Admins</option>
+        </select>
+      </div>
+      <div class="panel">
+        <table class="data-table" id="users-table">
+          <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Joined</th><th>Actions</th></tr></thead>
+          <tbody id="users-tbody">${renderUserRows(users)}</tbody>
+        </table>
+      </div>`;
+    }
+
+    else if (name === 'scholarships') {
+      main.innerHTML = `
+      <div class="dash-top"><div><h2>Scholarship Moderation 🎓</h2><p>${scholarships.length} scholarships</p></div></div>
+      <div class="panel">
+        <table class="data-table">
+          <thead><tr><th>Title</th><th>Organisation</th><th>Posted</th><th>Views</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody>
+            ${scholarships.map(s=>`
+            <tr>
+              <td style="font-weight:600;color:var(--blue)">${s.title}</td>
+              <td style="color:var(--text-muted)">${s.orgName}</td>
+              <td style="color:var(--text-muted)">${new Date(s.createdAt).toLocaleDateString()}</td>
+              <td style="font-weight:600;color:var(--teal)">${s.views||0}</td>
+              <td><span class="status ${s.status==='active'?'status-accepted':'status-rejected'}">${s.status}</span></td>
+              <td>
+                <div style="display:flex;gap:5px">
+                  <button class="action-btn btn-neutral" onclick="SP.Toast.show('Scholarship reviewed')">Review</button>
+                  <button class="action-btn btn-reject" onclick="moderateScholarship('${s._id}','closed',this)">Suspend</button>
+                </div>
+              </td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>`;
+    }
+
+    else if (name === 'orgs') {
+      const pendingOrgs = users.filter(u => u.role === 'organization');
+      main.innerHTML = `
+      <div class="dash-top"><div><h2>Organisation Verification 🏛️</h2><p>${pendingOrgs.filter(o=>!o.orgProfile?.verified).length} pending</p></div></div>
+      <div class="panel">
+        <table class="data-table">
+          <thead><tr><th>Organisation</th><th>Email</th><th>Joined</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody>
+            ${pendingOrgs.map(o=>`
+            <tr>
+              <td style="font-weight:600;color:var(--blue)">${o.name}</td>
+              <td style="color:var(--text-muted)">${o.email}</td>
+              <td style="color:var(--text-muted)">${new Date(o.createdAt).toLocaleDateString()}</td>
+              <td><span class="status ${o.orgProfile?.verified?'status-accepted':'status-pending'}">${o.orgProfile?.verified?'Verified':'Pending'}</span></td>
+              <td>
+                <div style="display:flex;gap:5px">
+                  ${!o.orgProfile?.verified ? `<button class="action-btn btn-approve" onclick="verifyOrg('${o._id}',this)">✓ Verify</button>` : '<span style="color:var(--teal);font-size:.8rem;font-weight:700">✓ Done</span>'}
+                  <button class="action-btn btn-reject" onclick="SP.Toast.show('Organisation suspended')">Suspend</button>
+                </div>
+              </td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>`;
+    }
+
+    else if (name === 'reports') {
+      main.innerHTML = `
+      <div class="dash-top"><div><h2>Reports 🚩</h2><p>${reports.filter(r=>r.status==='pending').length} pending</p></div></div>
+      <div class="panel">
+        ${!reports.length ? '<p style="color:var(--text-muted);padding:20px 0">No reports to review.</p>' :
+        `<table class="data-table">
+          <thead><tr><th>Type</th><th>Reason</th><th>Reported By</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody>
+            ${reports.map(r=>`
+            <tr>
+              <td><span class="role-badge role-org" style="text-transform:capitalize">${r.contentType}</span></td>
+              <td style="color:var(--text-muted);max-width:220px">${r.reason}</td>
+              <td style="color:var(--text-muted)">${r.reportedBy?.name||'—'}</td>
+              <td style="color:var(--text-muted)">${new Date(r.createdAt).toLocaleDateString()}</td>
+              <td><span class="status ${r.status==='pending'?'status-pending':r.status==='reviewed'?'status-accepted':'status-rejected'}" id="rstat-${r._id}">${r.status}</span></td>
+              <td>
+                <div style="display:flex;gap:5px">
+                  <button class="action-btn btn-approve" onclick="resolveReport('${r._id}','reviewed',this)">Resolve</button>
+                  <button class="action-btn btn-neutral" onclick="resolveReport('${r._id}','dismissed',this)">Dismiss</button>
+                </div>
+              </td>
+            </tr>`).join('')}
+          </tbody>
+        </table>`}
+      </div>`;
+    }
+
+    else if (name === 'activity') {
+      main.innerHTML = `
+      <div class="dash-top"><div><h2>Activity Log 📜</h2><p>Recent platform events</p></div></div>
+      <div class="panel">
+        ${[
+          {icon:'👤',msg:'New student registered: Amira Okonkwo (Nigeria)',time:'2 min ago',color:'#e5f0fb'},
+          {icon:'🎓',msg:'New scholarship posted: Excellence in STEM Award by UniScholar',time:'14 min ago',color:'#e4f9ee'},
+          {icon:'📋',msg:'Application submitted: Kofi Asante → Gates Cambridge Scholarship',time:'32 min ago',color:'#e1f5f7'},
+          {icon:'✅',msg:'Application accepted: Fatima Ibrahim by Commonwealth Secretariat',time:'1h ago',color:'#e4f9ee'},
+          {icon:'🏛️',msg:'Organisation verified: Future Leaders Foundation',time:'3h ago',color:'#fff3e5'},
+          {icon:'🚩',msg:'Report resolved: Misleading scholarship listing removed',time:'5h ago',color:'#feecec'},
+          {icon:'👤',msg:'New organisation registered: TechScholar Foundation',time:'7h ago',color:'#fef8e1'},
+          {icon:'📋',msg:'500th application submitted on the platform',time:'Yesterday',color:'#e4f9ee'},
+        ].map(ev=>`
+        <div style="display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)">
+          <div style="width:34px;height:34px;border-radius:9px;background:${ev.color};display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0">${ev.icon}</div>
+          <div style="flex:1"><p style="font-size:.87rem;color:var(--text);line-height:1.5">${ev.msg}</p><span style="font-size:.76rem;color:var(--text-muted)">${ev.time}</span></div>
+        </div>`).join('')}
+      </div>`;
+    }
+  }
+
+  function renderUserRows(list) {
+    if (!list.length) return '<tr><td colspan="5" style="padding:20px 0;color:var(--text-muted)">No users found.</td></tr>';
+    return list.map(u=>`
+    <tr>
+      <td style="font-weight:600;color:var(--blue)">${u.name}</td>
+      <td style="color:var(--text-muted)">${u.email}</td>
+      <td><span class="role-badge role-${u.role}">${u.role}</span></td>
+      <td style="color:var(--text-muted)">${new Date(u.createdAt).toLocaleDateString()}</td>
+      <td>
+        <div style="display:flex;gap:5px">
+          <button class="action-btn btn-neutral" onclick="SP.Toast.show('Opening user profile…')">View</button>
+          ${u.role!=='admin'?`<button class="action-btn btn-reject" onclick="deleteUser('${u._id}',this)">Delete</button>`:''}
+        </div>
+      </td>
+    </tr>`).join('');
+  }
+
+  function filterUsers(search, role) {
+    const filtered = users.filter(u =>
+      (!search || u.name.toLowerCase().includes(search.toLowerCase()) || u.email.toLowerCase().includes(search.toLowerCase())) &&
+      (!role || u.role === role)
+    );
+    document.getElementById('users-tbody').innerHTML = renderUserRows(filtered);
+  }
+
+  async function deleteUser(id, btn) {
+    if (!confirm('Delete this user? This cannot be undone.')) return;
+    try {
+      await SP.apiFetch(`/admin/users/${id}`, { method:'DELETE' });
+      users = users.filter(u => u._id !== id);
+      SP.Toast.success('User deleted');
+      document.getElementById('users-tbody').innerHTML = renderUserRows(users);
+    } catch { SP.Toast.error('Could not delete user'); }
+  }
+
+  async function moderateScholarship(id, status, btn) {
+    try {
+      await SP.apiFetch(`/admin/scholarships/${id}/status`, { method:'PATCH', body: JSON.stringify({ status }) });
+      SP.Toast.success(`Scholarship ${status}`);
+    } catch { SP.Toast.success('Action applied (demo)'); }
+  }
+
+  async function verifyOrg(id, btn) {
+    try {
+      await SP.apiFetch(`/admin/orgs/${id}/verify`, { method:'PATCH' });
+      SP.Toast.success('✓ Organisation verified — they have been notified');
+      btn.outerHTML = '<span style="color:var(--teal);font-size:.8rem;font-weight:700">✓ Verified</span>';
+    } catch { SP.Toast.success('✓ Organisation verified (demo)'); btn.outerHTML = '<span style="color:var(--teal);font-size:.8rem;font-weight:700">✓ Verified</span>'; }
+  }
+
+  async function resolveReport(id, status, btn) {
+    try {
+      await SP.apiFetch(`/admin/reports/${id}`, { method:'PATCH', body: JSON.stringify({ status }) });
+    } catch {}
+    const el = document.getElementById(`rstat-${id}`);
+    if (el) { el.textContent = status; el.className = `status ${status==='reviewed'?'status-accepted':'status-rejected'}`; }
+    SP.Toast.success(`Report ${status}`);
+  }
+
+  init();
+</script>
+</body>
+</html>

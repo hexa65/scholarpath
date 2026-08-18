@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Community Q&A — ScholarPath</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/main.css">
+  <style>
+    .comm-hero{background:linear-gradient(135deg,#0a2a45,#123E63);padding:52px 0;text-align:center}
+    .comm-hero h1{font-size:2.1rem;font-weight:800;color:#fff;margin-bottom:10px}
+    .comm-hero p{color:rgba(255,255,255,.72);margin-bottom:24px}
+    .comm-layout{max-width:1100px;margin:0 auto;padding:32px 24px;display:grid;grid-template-columns:1fr 300px;gap:24px}
+    .search-row{display:flex;gap:10px;margin-bottom:20px}
+    .search-row input{flex:1;padding:10px 16px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:inherit;font-size:.9rem;outline:none;transition:border .2s}
+    .search-row input:focus{border-color:var(--teal)}
+    .search-row select{width:160px;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:inherit;font-size:.88rem;background:#fff;outline:none}
+    .tag-strip{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:20px}
+    .ftag{background:var(--bg);color:var(--text-muted);border:1px solid var(--border);border-radius:10px;padding:4px 12px;font-size:.78rem;cursor:pointer;transition:all .18s}
+    .ftag:hover,.ftag.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+    .q-card{background:#fff;border-radius:var(--radius);padding:20px;box-shadow:var(--card-shadow);margin-bottom:14px;cursor:pointer;transition:all .2s;border:1.5px solid transparent}
+    .q-card:hover{border-color:var(--teal);transform:translateY(-2px)}
+    .q-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+    .q-top h3{font-size:.98rem;font-weight:700;color:var(--blue);line-height:1.4;flex:1}
+    .upvote-btn{display:flex;align-items:center;gap:4px;background:none;border:1.5px solid var(--border);border-radius:8px;padding:5px 12px;font-size:.82rem;font-weight:600;color:var(--text-muted);cursor:pointer;transition:all .18s;white-space:nowrap;flex-shrink:0}
+    .upvote-btn:hover,.upvote-btn.voted{border-color:var(--orange);color:var(--orange);background:#fff5eb}
+    .q-meta{display:flex;gap:12px;align-items:center;font-size:.78rem;color:var(--text-muted);margin-top:8px}
+    .q-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+    .widget{background:#fff;border-radius:var(--radius);padding:20px;box-shadow:var(--card-shadow);margin-bottom:16px}
+    .widget h3{font-size:.95rem;font-weight:700;color:var(--blue);margin-bottom:14px}
+    .topic-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);font-size:.86rem;cursor:pointer;transition:color .15s}
+    .topic-row:last-child{border-bottom:none}
+    .topic-row:hover{color:var(--teal)}
+    .topic-count{background:var(--bg);color:var(--text-muted);border-radius:9px;padding:2px 8px;font-size:.74rem;font-weight:600}
+    .contrib-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)}
+    .contrib-row:last-child{border-bottom:none}
+    .contrib-avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.74rem;font-weight:800;color:#fff;flex-shrink:0}
+    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px}
+    .modal{background:#fff;border-radius:var(--radius);padding:32px;max-width:560px;width:100%;box-shadow:0 20px 60px rgba(18,62,99,.2)}
+    .modal h2{font-size:1.3rem;font-weight:800;color:var(--blue);margin-bottom:20px}
+    .modal-close{float:right;background:none;border:none;font-size:1.3rem;color:var(--text-muted);cursor:pointer;margin-top:-4px}
+    @media(max-width:768px){.comm-layout{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+<div id="navbar-placeholder"></div>
+
+<div class="comm-hero">
+  <div class="section-label" style="color:var(--yellow)">Student Forum</div>
+  <h1>Community Q&amp;A</h1>
+  <p>Ask questions, share experiences, and help fellow students navigate the scholarship journey</p>
+  <button class="btn btn-primary" onclick="openAskModal()">+ Ask a Question</button>
+</div>
+
+<div class="comm-layout">
+  <div>
+    <div class="search-row">
+      <input type="text" id="q-search" placeholder="Search questions…" oninput="filterQuestions()">
+      <select id="q-tag-filter" onchange="filterQuestions()">
+        <option value="">All Topics</option>
+        <option>Applications</option><option>Visa Advice</option><option>Essays</option>
+        <option>Interviews</option><option>Scholarships</option><option>Study Tips</option>
+      </select>
+    </div>
+    <div class="tag-strip" id="tag-strip">
+      <span class="ftag active" onclick="setTag(this,'')">All</span>
+      <span class="ftag" onclick="setTag(this,'Applications')">Applications</span>
+      <span class="ftag" onclick="setTag(this,'Visa Advice')">Visa Advice</span>
+      <span class="ftag" onclick="setTag(this,'Essays')">Essays</span>
+      <span class="ftag" onclick="setTag(this,'Interviews')">Interviews</span>
+      <span class="ftag" onclick="setTag(this,'Scholarships')">Scholarships</span>
+    </div>
+    <div id="questions-list"></div>
+  </div>
+
+  <aside>
+    <div class="widget">
+      <h3>Popular Topics</h3>
+      <div id="topics-list"></div>
+    </div>
+    <div class="widget">
+      <h3>🏆 Top Contributors</h3>
+      <div id="contributors-list"></div>
+    </div>
+    <div class="widget">
+      <h3>💡 Quick Tips</h3>
+      <ul style="list-style:none;padding:0">
+        <li style="font-size:.84rem;color:var(--text-muted);padding:6px 0;border-bottom:1px solid var(--border)">✅ Be specific in your questions</li>
+        <li style="font-size:.84rem;color:var(--text-muted);padding:6px 0;border-bottom:1px solid var(--border)">✅ Search before asking duplicates</li>
+        <li style="font-size:.84rem;color:var(--text-muted);padding:6px 0;border-bottom:1px solid var(--border)">✅ Upvote helpful answers</li>
+        <li style="font-size:.84rem;color:var(--text-muted);padding:6px 0">✅ Be respectful and kind</li>
+      </ul>
+    </div>
+  </aside>
+</div>
+
+<!-- Ask Question Modal -->
+<div class="modal-overlay" id="ask-modal" style="display:none" onclick="closeModalOutside(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="closeAskModal()">✕</button>
+    <h2>Ask a Question</h2>
+    <div class="form-group">
+      <label class="form-label">Question Title *</label>
+      <input class="form-control" id="q-title" placeholder="e.g. What GPA is required for the Commonwealth Scholarship?">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Details</label>
+      <textarea class="form-control" id="q-body" rows="4" placeholder="Provide context, what you've already tried, and what specific help you need…"></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Tags</label>
+      <select class="form-control" id="q-tag">
+        <option>Applications</option><option>Visa Advice</option><option>Essays</option>
+        <option>Interviews</option><option>Scholarships</option><option>Study Tips</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:12px;margin-top:4px">
+      <button class="btn btn-primary" style="flex:1" onclick="submitQuestion()">Post Question</button>
+      <button class="btn btn-outline" onclick="closeAskModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="footer-placeholder"></div>
+<div id="toast-container"></div>
+<script src="../js/components.js"></script>
+<script src="../js/app.js"></script>
+<script>
+const SAMPLE_QUESTIONS = [
+  {_id:'q1',title:'What are the real chances of a Nigerian applicant getting the Commonwealth Scholarship?',content:'I have a 4.0 GPA in Computer Science and 2 years work experience. Has anyone been successful from Nigeria recently?',author:{name:'Kemi Adeyemi',role:'student'},tags:['Applications','Scholarships'],upvotes:28,answerCount:14,createdAt:new Date(Date.now()-2*3600000)},
+  {_id:'q2',title:'How important is work experience for Chevening vs DAAD — are they really different?',content:'Chevening requires 2 years work experience but DAAD seems more research-focused. Can anyone compare the two from experience?',author:{name:'Ahmed Bashir',role:'student'},tags:['Chevening','Applications'],upvotes:19,answerCount:9,createdAt:new Date(Date.now()-5*3600000)},
+  {_id:'q3',title:'Can I apply for multiple scholarships at the same time without hurting my chances?',content:'Planning to apply for Commonwealth, Chevening and Fulbright simultaneously. Is this allowed and will it affect any of them?',author:{name:'Priya Krishnan',role:'student'},tags:['Applications','Study Tips'],upvotes:45,answerCount:22,createdAt:new Date(Date.now()-86400000)},
+  {_id:'q4',title:'Best resources for writing a winning Gates Cambridge personal statement?',content:'I am applying for Gates Cambridge PhD. The personal statement feels daunting. Any books, templates or advice from successful applicants?',author:{name:'James Okonkwo',role:'student'},tags:['Essays','Applications'],upvotes:36,answerCount:17,createdAt:new Date(Date.now()-2*86400000)},
+  {_id:'q5',title:'Is the Fulbright open to Economics graduates from Nigeria?',content:'I have a first class in Economics and want to do a Masters in Public Policy in the US. Does Fulbright cover this field?',author:{name:'Chisom Ibe',role:'student'},tags:['Scholarships','Visa Advice'],upvotes:21,answerCount:8,createdAt:new Date(Date.now()-3*86400000)},
+  {_id:'q6',title:'What happens after you receive a Chevening scholarship offer — what are the next steps?',content:'I just got a conditional offer! What should I expect in terms of visa process, university acceptance and pre-departure briefings?',author:{name:'Fatima Musa',role:'student'},tags:['Visa Advice','Interviews'],upvotes:52,answerCount:19,createdAt:new Date(Date.now()-4*86400000)},
+  {_id:'q7',title:'IELTS vs TOEFL — which do most UK scholarship programmes prefer?',content:'I need to take an English test for my applications. Several scholarships list both but I want to know which one reviewers actually prefer to see.',author:{name:'Daniel Mensah',role:'student'},tags:['Applications','Study Tips'],upvotes:31,answerCount:12,createdAt:new Date(Date.now()-5*86400000)},
+];
+
+const TOPICS = [['Scholarships',234],['Applications',143],['Visa Advice',89],['Essays',76],['Interviews',52],['Study Tips',118]];
+const CONTRIBUTORS = [
+  {name:'Kemi Adeyemi',pts:'Level 5 · 234 pts',bg:'#FF8A1F'},
+  {name:'James Okonkwo',pts:'Level 4 · 187 pts',bg:'#3EC1C9'},
+  {name:'Priya Krishnan',pts:'Level 4 · 156 pts',bg:'#123E63'},
+  {name:'Fatima Musa',pts:'Level 3 · 128 pts',bg:'#F9C74F',tc:'#8a6800'},
+];
+
+let questions = [...SAMPLE_QUESTIONS];
+let activeTag = '';
+const votedSet = new Set();
+
+async function loadQuestions() {
+  try {
+    const data = await SP.apiFetch('/community');
+    if (data.length) questions = data;
+  } catch {}
+  renderQuestions(questions);
+}
+
+function renderQuestions(list) {
+  const el = document.getElementById('questions-list');
+  if (!list.length) { el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted)"><div style="font-size:2.5rem;margin-bottom:12px">🔍</div><p>No questions found. Be the first to ask!</p></div>'; return; }
+  el.innerHTML = list.map(q => `
+  <div class="q-card" onclick="openQuestion('${q._id}')">
+    <div class="q-top">
+      <h3>${q.title}</h3>
+      <button class="upvote-btn ${votedSet.has(q._id)?'voted':''}" onclick="upvote(event,'${q._id}',this)">
+        ▲ ${q.upvotes||0}
+      </button>
+    </div>
+    <div class="q-meta">
+      <span>👤 ${q.author?.name||'Anonymous'}</span>
+      <span>⏱ ${timeAgo(q.createdAt)}</span>
+      <span>💬 ${q.answerCount||q.answers?.length||0} answers</span>
+    </div>
+    <div class="q-tags">${(q.tags||[]).map(t=>`<span class="tag tag-blue" style="font-size:.72rem">${t}</span>`).join('')}</div>
+  </div>`).join('');
+}
+
+function filterQuestions() {
+  const kw = document.getElementById('q-search').value.toLowerCase();
+  const tag = document.getElementById('q-tag-filter').value || activeTag;
+  const filtered = questions.filter(q =>
+    (!kw || q.title.toLowerCase().includes(kw) || (q.content||'').toLowerCase().includes(kw)) &&
+    (!tag || (q.tags||[]).some(t=>t.toLowerCase().includes(tag.toLowerCase())))
+  );
+  renderQuestions(filtered);
+}
+
+function setTag(el, tag) {
+  document.querySelectorAll('.ftag').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  activeTag = tag;
+  filterQuestions();
+}
+
+async function upvote(e, id, btn) {
+  e.stopPropagation();
+  if (!SP.Auth.isLoggedIn()) { SP.Toast.warn('Please log in to vote'); return; }
+  const voted = votedSet.has(id);
+  if (voted) votedSet.delete(id); else votedSet.add(id);
+  btn.classList.toggle('voted', !voted);
+  const q = questions.find(x=>x._id===id);
+  if (q) { q.upvotes = (q.upvotes||0) + (voted?-1:1); btn.textContent = `▲ ${q.upvotes}`; }
+  try { await SP.apiFetch('/community/'+id+'/upvote', { method:'POST' }); } catch {}
+  SP.Toast.success(voted ? 'Vote removed' : 'Upvoted!');
+}
+
+function openQuestion(id) {
+  const q = questions.find(x=>x._id===id);
+  if (!q) return;
+  SP.Toast.show(`Opening: "${q.title.substring(0,50)}…"`);
+}
+
+function openAskModal() {
+  if (!SP.Auth.isLoggedIn()) { SP.Toast.warn('Please log in to ask questions'); setTimeout(()=>window.location='login.html',1000); return; }
+  document.getElementById('ask-modal').style.display = 'flex';
+}
+function closeAskModal() { document.getElementById('ask-modal').style.display = 'none'; }
+function closeModalOutside(e) { if (e.target.id==='ask-modal') closeAskModal(); }
+
+async function submitQuestion() {
+  const title = document.getElementById('q-title').value.trim();
+  const content = document.getElementById('q-body').value.trim();
+  const tag = document.getElementById('q-tag').value;
+  if (!title) { SP.Toast.error('Please enter a question title'); return; }
+  try {
+    const q = await SP.apiFetch('/community', { method:'POST', body: JSON.stringify({ title, content, tags:[tag] }) });
+    questions.unshift({ ...q, answerCount:0, upvotes:0 });
+    renderQuestions(questions);
+    closeAskModal();
+    SP.Toast.success('✓ Question posted! Others can now answer it.');
+    document.getElementById('q-title').value = '';
+    document.getElementById('q-body').value = '';
+  } catch {
+    // Optimistic local add
+    const newQ = { _id:'local-'+Date.now(), title, content, tags:[tag], author:{ name: SP.Auth.getUser()?.name||'You' }, upvotes:0, answerCount:0, createdAt:new Date() };
+    questions.unshift(newQ);
+    renderQuestions(questions);
+    closeAskModal();
+    SP.Toast.success('✓ Question posted!');
+  }
+}
+
+function timeAgo(date) {
+  const diff = Math.floor((Date.now()-new Date(date))/1000);
+  if (diff<60) return diff+'s ago';
+  if (diff<3600) return Math.floor(diff/60)+'m ago';
+  if (diff<86400) return Math.floor(diff/3600)+'h ago';
+  return Math.floor(diff/86400)+'d ago';
+}
+
+// Render sidebar
+document.getElementById('topics-list').innerHTML = TOPICS.map(([t,c])=>`
+<div class="topic-row" onclick="setTag(document.querySelector('.ftag'),'${t}')">
+  <span>${t}</span><span class="topic-count">${c}</span>
+</div>`).join('');
+
+document.getElementById('contributors-list').innerHTML = CONTRIBUTORS.map(c=>`
+<div class="contrib-row">
+  <div class="contrib-avatar" style="background:${c.bg};color:${c.tc||'#fff'}">${c.name.substring(0,2).toUpperCase()}</div>
+  <div><div style="font-size:.87rem;font-weight:600;color:var(--blue)">${c.name}</div><div style="font-size:.76rem;color:var(--text-muted)">${c.pts}</div></div>
+</div>`).join('');
+
+loadQuestions();
+</script>
+</body>
+</html>

@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Org Dashboard — ScholarPath</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/main.css">
+  <style>
+    body { overflow-x: hidden; }
+    .app-row { display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border); }
+    .app-row:last-child { border-bottom:none; }
+    .app-avatar { width:36px;height:36px;border-radius:50%;background:var(--teal);display:flex;align-items:center;justify-content:center;font-size:.74rem;font-weight:800;color:#fff;flex-shrink:0; }
+    .app-row-info { flex:1; }
+    .app-row-info h4 { font-size:.88rem;font-weight:600;color:var(--blue); }
+    .app-row-info p  { font-size:.76rem;color:var(--text-muted);margin-top:2px; }
+    .action-btn { border:none;padding:5px 13px;border-radius:8px;font-size:.76rem;font-weight:700;cursor:pointer;transition:all .18s;font-family:inherit; }
+    .btn-approve { background:#e4f9ee;color:#1a7a4a; }
+    .btn-approve:hover { background:#1a7a4a;color:#fff; }
+    .btn-reject  { background:#feecec;color:#c0392b; }
+    .btn-reject:hover  { background:#c0392b;color:#fff; }
+    .sch-mgmt-row { display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid var(--border); }
+    .sch-mgmt-row:last-child { border-bottom:none; }
+    .sch-status-dot { width:10px;height:10px;border-radius:50%;flex-shrink:0; }
+    .sch-mgmt-info { flex:1; }
+    .sch-mgmt-info h4 { font-size:.9rem;font-weight:600;color:var(--blue); }
+    .sch-mgmt-info p  { font-size:.78rem;color:var(--text-muted);margin-top:2px; }
+    .bar-chart { display:flex;align-items:flex-end;gap:8px;height:110px;margin-top:16px; }
+    .bar-wrap { flex:1;display:flex;flex-direction:column;align-items:center; }
+    .bar { width:100%;border-radius:6px 6px 0 0;transition:height .6s; }
+    .bar-label { font-size:.7rem;color:var(--text-muted);margin-top:5px; }
+    .verify-badge { display:inline-flex;align-items:center;gap:5px;background:#e4f9ee;color:#1a7a4a;border-radius:10px;padding:3px 10px;font-size:.75rem;font-weight:700; }
+    .msg-item { display:flex;align-items:flex-start;gap:10px;padding:12px 0;border-bottom:1px solid var(--border); }
+    .msg-item:last-child { border-bottom:none; }
+    .msg-avatar { width:36px;height:36px;border-radius:50%;background:var(--blue);display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:800;color:#fff;flex-shrink:0; }
+  </style>
+</head>
+<body>
+<div id="navbar-placeholder"></div>
+
+<div class="dash-layout">
+  <aside class="sidebar">
+    <div class="sidebar-user">
+      <div class="user-avatar" id="o-avatar" style="background:var(--teal);font-size:.85rem">ORG</div>
+      <h4 id="o-name">Organisation</h4>
+      <p id="o-verified" style="font-size:.76rem;color:rgba(255,255,255,.6)">Unverified</p>
+      <div class="progress-wrap">
+        <div class="progress-lbl"><span>Trust Score</span><span id="o-score">0%</span></div>
+        <div class="progress-track"><div class="progress-fill" id="o-prog" style="width:0%;background:var(--yellow)"></div></div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-item active" onclick="showPanel('overview',this)"><span class="icon">📊</span> Overview</div>
+      <div class="nav-item" onclick="showPanel('scholarships',this)"><span class="icon">🎓</span> My Scholarships</div>
+      <div class="nav-item" onclick="showPanel('applicants',this)"><span class="icon">👥</span> Applicants <span class="nav-badge" id="app-badge">0</span></div>
+      <div class="nav-item" onclick="showPanel('post',this)"><span class="icon">➕</span> Post Scholarship</div>
+      <div class="nav-item" onclick="showPanel('analytics',this)"><span class="icon">📈</span> Analytics</div>
+      <div class="nav-item" onclick="showPanel('messages',this)"><span class="icon">💬</span> Messages</div>
+      <div class="nav-item" onclick="showPanel('settings',this)"><span class="icon">⚙️</span> Settings</div>
+      <div class="nav-item" onclick="logout()" style="color:rgba(255,255,255,.5)"><span class="icon">↩</span> Log Out</div>
+    </nav>
+  </aside>
+
+  <main class="dash-main" id="org-main"></main>
+</div>
+
+<div id="footer-placeholder"></div>
+<div id="toast-container"></div>
+<script src="../js/components.js"></script>
+<script src="../js/app.js"></script>
+<script>
+  if (!SP.Auth.isLoggedIn()) window.location = '/pages/login.html';
+  if (SP.Auth.role() === 'student') window.location = '/pages/dashboard.html';
+
+  const user = SP.Auth.getUser();
+  let myScholarships = [], analytics = {}, applicants = [];
+
+  async function init() {
+    const initials = (user?.name||'ORG').split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+    document.getElementById('o-avatar').textContent = initials;
+    document.getElementById('o-name').textContent = user?.name || 'Organisation';
+
+    try {
+      [myScholarships, analytics] = await Promise.all([
+        SP.apiFetch('/scholarships/org/mine'),
+        SP.apiFetch('/analytics/org'),
+      ]);
+    } catch {
+      myScholarships = [
+        { _id:'s1', title:'Excellence in STEM Award', level:'Masters', field:'STEM', deadline:new Date(Date.now()+45*86400000), status:'active', views:342, bookmarks:28, amount:'$25,000', country:'USA' },
+        { _id:'s2', title:'Future Leaders Scholarship', level:'Undergraduate', field:'Any', deadline:new Date(Date.now()+60*86400000), status:'active', views:218, bookmarks:15, amount:'£15,000', country:'UK' },
+        { _id:'s3', title:'Research Innovation Grant', level:'PhD', field:'Science', deadline:new Date(Date.now()+7*86400000), status:'active', views:189, bookmarks:22, amount:'€20,000', country:'Germany' },
+      ];
+      analytics = { scholarships:3, totalApps:247, accepted:34, pending:89, views:12400, bookmarks:65 };
+    }
+
+    try {
+      if (myScholarships[0]) {
+        applicants = await SP.apiFetch(`/scholarships/${myScholarships[0]._id}/applicants`);
+      }
+    } catch {
+      applicants = [
+        { _id:'ap1', student:{ name:'Amira Okonkwo', email:'amira@gmail.com', profile:{ country:'Nigeria', gpa:3.9 } }, status:'pending', createdAt:new Date() },
+        { _id:'ap2', student:{ name:'Kofi Asante', email:'kofi@gmail.com', profile:{ country:'Ghana', gpa:3.7 } }, status:'under_review', createdAt:new Date() },
+        { _id:'ap3', student:{ name:'Fatima Ibrahim', email:'fatima@gmail.com', profile:{ country:'Kenya', gpa:3.8 } }, status:'accepted', createdAt:new Date() },
+        { _id:'ap4', student:{ name:'James Adeyemi', email:'james@gmail.com', profile:{ country:'Nigeria', gpa:3.5 } }, status:'pending', createdAt:new Date() },
+        { _id:'ap5', student:{ name:'Priya Kumar', email:'priya@gmail.com', profile:{ country:'India', gpa:3.6 } }, status:'rejected', createdAt:new Date() },
+      ];
+    }
+
+    const isVerified = user?.orgProfile?.verified;
+    document.getElementById('o-verified').textContent = isVerified ? '✓ Verified Organisation' : 'Pending Verification';
+    const score = isVerified ? 96 : 64;
+    document.getElementById('o-score').textContent = score + '%';
+    document.getElementById('o-prog').style.width = score + '%';
+    document.getElementById('app-badge').textContent = analytics.totalApps || 0;
+
+    showPanel('overview', document.querySelector('.nav-item'));
+  }
+
+  function showPanel(name, el) {
+    document.querySelectorAll('.sidebar .nav-item').forEach(i => i.classList.remove('active'));
+    if (el) el.classList.add('active');
+    const main = document.getElementById('org-main');
+
+    if (name === 'overview') {
+      main.innerHTML = `
+      <div class="dash-top">
+        <div><h2>Organisation Dashboard 🏛️</h2><p>${user?.name} · <span style="color:var(--teal)">Verified Partner ✓</span></p></div>
+        <button class="btn btn-primary btn-sm" onclick="showPanel('post', document.querySelectorAll('.sidebar .nav-item')[3])">+ Post New Scholarship</button>
+      </div>
+      <div class="stat-grid">
+        <div class="stat-box"><div class="stat-icon" style="background:#e5f0fb">🎓</div><h3>${analytics.scholarships||0}</h3><p>Active Scholarships</p></div>
+        <div class="stat-box"><div class="stat-icon" style="background:#e4f9ee">👥</div><h3>${analytics.totalApps||0}</h3><p>Total Applicants</p></div>
+        <div class="stat-box"><div class="stat-icon" style="background:#fff3e5">✅</div><h3>${analytics.accepted||0}</h3><p>Awards Granted</p></div>
+        <div class="stat-box"><div class="stat-icon" style="background:#fef8e1">👁️</div><h3>${(analytics.views||0).toLocaleString()}</h3><p>Profile Views</p></div>
+      </div>
+      <div class="two-col">
+        <div class="panel">
+          <div class="panel-head"><h3>Applications by Month</h3></div>
+          <div class="bar-chart">
+            ${[['Jan',42],['Feb',68],['Mar',55],['Apr',110],['May',95],['Jun',140]].map(([m,v])=>`
+            <div class="bar-wrap">
+              <div class="bar" style="height:${Math.round(v/140*100)}%;background:${v>=100?'var(--orange)':'var(--teal)'}"></div>
+              <div class="bar-label">${m}<br><strong style="color:var(--blue)">${v}</strong></div>
+            </div>`).join('')}
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><h3>Recent Applicants</h3><a href="#" onclick="showPanel('applicants',null)">View all →</a></div>
+          ${applicants.slice(0,5).map(a => `
+          <div class="app-row">
+            <div class="app-avatar">${(a.student?.name||'?').substring(0,2).toUpperCase()}</div>
+            <div class="app-row-info">
+              <h4>${a.student?.name||'Unknown'}</h4>
+              <p>${a.student?.profile?.country||''} · GPA ${a.student?.profile?.gpa||'—'}</p>
+            </div>
+            <div style="display:flex;gap:6px">
+              <button class="action-btn btn-approve" onclick="updateApp('${a._id}','accepted',this)">Accept</button>
+              <button class="action-btn btn-reject"  onclick="updateApp('${a._id}','rejected',this)">Reject</button>
+            </div>
+          </div>`).join('')}
+        </div>
+      </div>
+      <div class="panel" style="margin-top:20px">
+        <div class="panel-head"><h3>My Scholarships</h3><a href="#" onclick="showPanel('scholarships',null)">Manage all →</a></div>
+        ${myScholarships.slice(0,3).map(s => {
+          const d = SP.daysUntil(s.deadline); const cls = SP.deadlineClass(d);
+          return `<div class="sch-mgmt-row">
+            <div class="sch-status-dot" style="background:${s.status==='active'?'#1a7a4a':'#c0392b'}"></div>
+            <div class="sch-mgmt-info">
+              <h4>${s.title}</h4>
+              <p>${s.level} · ${s.field} · ${s.country} · ${s.views} views · ${s.bookmarks} saves</p>
+            </div>
+            <span class="deadline-badge ${cls}" style="margin-right:10px">${SP.deadlineLabel(d)}</span>
+            <button class="btn btn-secondary btn-sm" onclick="SP.Toast.success('Opening editor…')">Edit</button>
+          </div>`;
+        }).join('')}
+      </div>`;
+    }
+
+    else if (name === 'scholarships') {
+      main.innerHTML = `
+      <div class="dash-top"><div><h2>My Scholarships 🎓</h2><p>${myScholarships.length} scholarships posted</p></div>
+        <button class="btn btn-primary btn-sm" onclick="showPanel('post',null)">+ Post New</button>
+      </div>
+      <div class="panel">
+        ${myScholarships.length === 0 ? '<p style="color:var(--text-muted);padding:20px 0">No scholarships posted yet.</p>' :
+        `<table style="width:100%;border-collapse:collapse">
+          <thead><tr style="border-bottom:2px solid var(--border)">${['Title','Level','Deadline','Views','Status','Actions'].map(h=>`<th style="text-align:left;padding:10px 0;font-size:.8rem;color:var(--text-muted);font-weight:600">${h}</th>`).join('')}</tr></thead>
+          <tbody>${myScholarships.map(s => {
+            const d = SP.daysUntil(s.deadline);
+            return `<tr style="border-bottom:1px solid var(--border)">
+              <td style="padding:12px 0;font-weight:600;font-size:.9rem;color:var(--blue)">${s.title}</td>
+              <td style="padding:12px 0;font-size:.84rem;color:var(--text-muted)">${s.level}</td>
+              <td style="padding:12px 0"><span class="deadline-badge ${SP.deadlineClass(d)}">${SP.deadlineLabel(d)}</span></td>
+              <td style="padding:12px 0;font-size:.84rem;color:var(--text-muted)">${s.views||0}</td>
+              <td style="padding:12px 0"><span class="status ${s.status==='active'?'status-accepted':'status-rejected'}">${s.status}</span></td>
+              <td style="padding:12px 0;display:flex;gap:6px">
+                <button class="action-btn btn-approve" onclick="SP.Toast.success('Opening editor…')">Edit</button>
+                <button class="action-btn btn-reject"  onclick="deleteScholarship('${s._id}',this)">Delete</button>
+              </td>
+            </tr>`;
+          }).join('')}</tbody>
+        </table>`}
+      </div>`;
+    }
+
+    else if (name === 'applicants') {
+      const STATUS_LABELS = { pending:'Pending', under_review:'Under Review', accepted:'Accepted', rejected:'Rejected' };
+      main.innerHTML = `
+      <div class="dash-top"><div><h2>Applicants 👥</h2><p>${applicants.length} total applicants</p></div>
+        <div style="display:flex;gap:8px">
+          <select class="form-control" style="width:160px;padding:8px 12px" onchange="filterApplicants(this.value)">
+            <option value="">All Status</option>
+            <option value="pending">Pending</option>
+            <option value="under_review">Under Review</option>
+            <option value="accepted">Accepted</option>
+            <option value="rejected">Rejected</option>
+          </select>
+        </div>
+      </div>
+      <div class="panel" id="applicant-list">
+        <table style="width:100%;border-collapse:collapse">
+          <thead><tr style="border-bottom:2px solid var(--border)">${['Applicant','Country','GPA','Applied','Status','Actions'].map(h=>`<th style="text-align:left;padding:10px 0;font-size:.8rem;color:var(--text-muted);font-weight:600">${h}</th>`).join('')}</tr></thead>
+          <tbody id="app-tbody">
+            ${renderApplicantRows(applicants)}
+          </tbody>
+        </table>
+      </div>`;
+    }
+
+    else if (name === 'post') {
+      main.innerHTML = `
+      <div class="dash-top"><div><h2>Post New Scholarship ➕</h2><p>Fill in the details to create your listing</p></div></div>
+      <div class="two-col">
+        <div class="panel">
+          <h3 style="font-size:1rem;font-weight:700;color:var(--blue);margin-bottom:20px">Scholarship Details</h3>
+          <div class="form-group"><label class="form-label">Scholarship Title *</label><input class="form-control" id="p-title" placeholder="e.g. Excellence in STEM Award 2025"></div>
+          <div class="form-group"><label class="form-label">Description *</label><textarea class="form-control" id="p-desc" rows="4" placeholder="Describe the scholarship, its purpose and target students…"></textarea></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+            <div class="form-group"><label class="form-label">Award Amount *</label><input class="form-control" id="p-amount" placeholder="e.g. $25,000 / Fully Funded"></div>
+            <div class="form-group"><label class="form-label">Study Level *</label>
+              <select class="form-control" id="p-level"><option value="">Select level</option><option>Undergraduate</option><option>Masters</option><option>PhD</option><option>Postdoctoral</option><option>Any</option></select>
+            </div>
+            <div class="form-group"><label class="form-label">Field of Study *</label>
+              <select class="form-control" id="p-field"><option value="">Select field</option><option>Any</option><option>STEM</option><option>Business</option><option>Medicine</option><option>Arts & Humanities</option><option>Law</option><option>Social Sciences</option></select>
+            </div>
+            <div class="form-group"><label class="form-label">Host Country *</label><input class="form-control" id="p-country" placeholder="e.g. United Kingdom"></div>
+            <div class="form-group"><label class="form-label">Funding Type *</label>
+              <select class="form-control" id="p-funding"><option value="">Select type</option><option>Fully Funded</option><option>Partial</option><option>Stipend Only</option></select>
+            </div>
+            <div class="form-group"><label class="form-label">Application Deadline *</label><input type="date" class="form-control" id="p-deadline"></div>
+          </div>
+        </div>
+        <div>
+          <div class="panel" style="margin-bottom:16px">
+            <h3 style="font-size:1rem;font-weight:700;color:var(--blue);margin-bottom:16px">Eligibility & Requirements</h3>
+            <div class="form-group"><label class="form-label">Eligibility Criteria (one per line)</label>
+              <textarea class="form-control" id="p-eligibility" rows="5" placeholder="Citizen of a developing country&#10;Bachelor's degree with 2:1 or above&#10;Age 18–35&#10;Demonstrated financial need"></textarea>
+            </div>
+            <div class="form-group"><label class="form-label">Benefits (one per line)</label>
+              <textarea class="form-control" id="p-benefits" rows="4" placeholder="Full tuition coverage&#10;Monthly living stipend&#10;Return airfare&#10;Health insurance"></textarea>
+            </div>
+            <div class="form-group"><label class="form-label">Required Documents (one per line)</label>
+              <textarea class="form-control" id="p-docs" rows="4" placeholder="Academic transcripts&#10;Two reference letters&#10;Personal statement&#10;Proof of nationality"></textarea>
+            </div>
+          </div>
+          <div style="display:flex;gap:12px">
+            <button class="btn btn-primary" style="flex:1" onclick="postScholarship()">🚀 Publish Scholarship</button>
+            <button class="btn btn-outline" onclick="SP.Toast.success('Draft saved!')">Save Draft</button>
+          </div>
+        </div>
+      </div>`;
+    }
+
+    else if (name === 'analytics') {
+      main.innerHTML = `
+      <div class="dash-top"><div><h2>Analytics 📈</h2><p>Platform performance for your scholarships</p></div></div>
+      <div class="stat-grid">
+        <div class="stat-box"><div class="stat-icon" style="background:#e5f0fb">👁️</div><h3>${(analytics.views||0).toLocaleString()}</h3><p>Total Views</p><div class="trend trend-up">↑ 18% this month</div></div>
+        <div class="stat-box"><div class="stat-icon" style="background:#e4f9ee">📋</div><h3>${analytics.totalApps||0}</h3><p>Total Applications</p><div class="trend trend-up">↑ 24% this month</div></div>
+        <div class="stat-box"><div class="stat-icon" style="background:#fff3e5">🔖</div><h3>${analytics.bookmarks||0}</h3><p>Saves</p><div class="trend trend-up">↑ 12% this month</div></div>
+        <div class="stat-box"><div class="stat-icon" style="background:#fef8e1">✅</div><h3>${analytics.accepted||0}</h3><p>Accepted</p></div>
+      </div>
+      <div class="two-col">
+        <div class="panel">
+          <div class="panel-head"><h3>Application Status Breakdown</h3></div>
+          ${[['Pending','#F9C74F',analytics.pending||89],['Under Review','#3EC1C9',analytics.totalApps-(analytics.pending||89)-(analytics.accepted||34)-10||47],['Accepted','#1a7a4a',analytics.accepted||34],['Rejected','#c0392b',10]].map(([label,color,val])=>{
+            const pct = analytics.totalApps ? Math.round(val/analytics.totalApps*100) : 0;
+            return `<div style="margin-bottom:14px">
+              <div style="display:flex;justify-content:space-between;font-size:.85rem;margin-bottom:5px">
+                <span style="font-weight:600;color:var(--blue)">${label}</span>
+                <span style="color:var(--text-muted)">${val} (${pct}%)</span>
+              </div>
+              <div style="height:8px;background:var(--border);border-radius:10px;overflow:hidden">
+                <div style="height:100%;width:${pct}%;background:${color};border-radius:10px;transition:width .8s"></div>
+              </div>
+            </div>`;
+          }).join('')}
+        </div>
+        <div class="panel">
+          <div class="panel-head"><h3>Top Performing Scholarships</h3></div>
+          ${myScholarships.map(s=>`
+          <div class="sch-mgmt-row">
+            <div class="sch-mgmt-info"><h4>${s.title}</h4><p>${s.views||0} views · ${s.bookmarks||0} saves</p></div>
+            <span class="deadline-badge deadline-green">Active</span>
+          </div>`).join('') || '<p style="color:var(--text-muted)">No scholarships yet.</p>'}
+        </div>
+      </div>`;
+    }
+
+    else if (name === 'messages') {
+      const msgs = [
+        { name:'Amira Okonkwo', time:'2h ago', msg:'Hi, I wanted to ask about the language requirements for the award…', unread:true },
+        { name:'Kofi Asante', time:'Yesterday', msg:'Thank you for reviewing my application. I have submitted the additional documents.', unread:false },
+        { name:'Fatima Ibrahim', time:'3d ago', msg:'Is it possible to defer the scholarship to the next academic year?', unread:false },
+      ];
+      main.innerHTML = `
+      <div class="dash-top"><div><h2>Messages 💬</h2><p>Communicate with applicants</p></div></div>
+      <div class="panel">
+        ${msgs.map(m=>`
+        <div class="msg-item" style="cursor:pointer" onclick="SP.Toast.show('Opening conversation…')">
+          <div class="msg-avatar">${m.name.substring(0,2).toUpperCase()}</div>
+          <div style="flex:1">
+            <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+              <h4 style="font-size:.9rem;font-weight:${m.unread?'700':'600'};color:var(--blue)">${m.name}</h4>
+              <span style="font-size:.76rem;color:var(--text-muted)">${m.time}</span>
+            </div>
+            <p style="font-size:.83rem;color:var(--text-muted);line-height:1.5">${m.msg}</p>
+          </div>
+          ${m.unread ? `<div style="width:9px;height:9px;border-radius:50%;background:var(--teal);flex-shrink:0;margin-top:4px"></div>` : ''}
+        </div>`).join('')}
+      </div>`;
+    }
+
+    else if (name === 'settings') {
+      main.innerHTML = `
+      <div class="dash-top"><div><h2>Organisation Settings ⚙️</h2></div></div>
+      <div class="two-col">
+        <div class="panel">
+          <div class="panel-head"><h3>Organisation Profile</h3></div>
+          <div class="form-group"><label class="form-label">Organisation Name</label><input class="form-control" value="${user?.name||''}"></div>
+          <div class="form-group"><label class="form-label">Description</label><textarea class="form-control" rows="3" placeholder="Describe your organisation…">${user?.orgProfile?.description||''}</textarea></div>
+          <div class="form-group"><label class="form-label">Website</label><input class="form-control" type="url" value="${user?.orgProfile?.website||''}" placeholder="https://yourorg.com"></div>
+          <div class="form-group"><label class="form-label">Contact Email</label><input class="form-control" type="email" value="${user?.email||''}"></div>
+          <button class="btn btn-primary" onclick="SP.Toast.success('Settings saved!')">Save Changes</button>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><h3>Verification Status</h3></div>
+          <div style="background:var(--bg);border-radius:var(--radius-sm);padding:20px;text-align:center;margin-bottom:16px">
+            <div style="font-size:2.5rem;margin-bottom:10px">${user?.orgProfile?.verified ? '✅' : '⏳'}</div>
+            <h4 style="color:var(--blue);margin-bottom:6px">${user?.orgProfile?.verified ? 'Verified Organisation' : 'Verification Pending'}</h4>
+            <p style="font-size:.85rem;color:var(--text-muted)">${user?.orgProfile?.verified ? 'Your organisation is fully verified and trusted.' : 'Submit your documents for review. Usually takes 2–3 business days.'}</p>
+          </div>
+          ${!user?.orgProfile?.verified ? `<button class="btn btn-secondary" style="width:100%" onclick="SP.Toast.success('Documents submitted for review!')">Submit for Verification</button>` : ''}
+        </div>
+      </div>`;
+    }
+  }
+
+  function renderApplicantRows(list) {
+    if (!list.length) return `<tr><td colspan="6" style="padding:24px 0;color:var(--text-muted);font-size:.9rem">No applicants found.</td></tr>`;
+    return list.map(a => `
+    <tr style="border-bottom:1px solid var(--border)" id="row-${a._id}">
+      <td style="padding:12px 0">
+        <div style="display:flex;align-items:center;gap:9px">
+          <div class="app-avatar">${(a.student?.name||'?').substring(0,2).toUpperCase()}</div>
+          <div><div style="font-weight:600;font-size:.88rem;color:var(--blue)">${a.student?.name||'Unknown'}</div><div style="font-size:.76rem;color:var(--text-muted)">${a.student?.email||''}</div></div>
+        </div>
+      </td>
+      <td style="padding:12px 0;font-size:.84rem;color:var(--text-muted)">${a.student?.profile?.country||'—'}</td>
+      <td style="padding:12px 0;font-size:.84rem;font-weight:600;color:var(--blue)">${a.student?.profile?.gpa||'—'}</td>
+      <td style="padding:12px 0;font-size:.82rem;color:var(--text-muted)">${new Date(a.createdAt).toLocaleDateString()}</td>
+      <td style="padding:12px 0"><span class="status status-${a.status==='under_review'?'review':a.status}" id="status-${a._id}">${{pending:'Pending',under_review:'Under Review',accepted:'Accepted ✓',rejected:'Rejected'}[a.status]||a.status}</span></td>
+      <td style="padding:12px 0">
+        <div style="display:flex;gap:6px">
+          <button class="action-btn btn-approve" onclick="updateApp('${a._id}','accepted',this)">Accept</button>
+          <button class="action-btn btn-reject"  onclick="updateApp('${a._id}','rejected',this)">Reject</button>
+        </div>
+      </td>
+    </tr>`).join('');
+  }
+
+  function filterApplicants(status) {
+    const filtered = status ? applicants.filter(a => a.status === status) : applicants;
+    document.getElementById('app-tbody').innerHTML = renderApplicantRows(filtered);
+  }
+
+  async function updateApp(id, status, btn) {
+    try {
+      await SP.apiFetch(`/applications/${id}/status`, { method:'PATCH', body: JSON.stringify({ status }) });
+      const el = document.getElementById(`status-${id}`);
+      if (el) { el.textContent = status === 'accepted' ? 'Accepted ✓' : 'Rejected'; el.className = `status status-${status}`; }
+      SP.Toast.success(status === 'accepted' ? '✓ Application accepted — student notified' : 'Application rejected — student notified');
+    } catch {
+      // Optimistic UI
+      const el = document.getElementById(`status-${id}`);
+      if (el) { el.textContent = status === 'accepted' ? 'Accepted ✓' : 'Rejected'; el.className = `status status-${status}`; }
+      SP.Toast.success(status === 'accepted' ? '✓ Application accepted' : 'Application rejected');
+    }
+  }
+
+  async function deleteScholarship(id, btn) {
+    if (!confirm('Delete this scholarship? This cannot be undone.')) return;
+    try {
+      await SP.apiFetch(`/scholarships/${id}`, { method: 'DELETE' });
+      myScholarships = myScholarships.filter(s => s._id !== id);
+      SP.Toast.success('Scholarship deleted');
+      showPanel('scholarships', null);
+    } catch { SP.Toast.error('Failed to delete. Please try again.'); }
+  }
+
+  async function postScholarship() {
+    const title    = document.getElementById('p-title')?.value.trim();
+    const desc     = document.getElementById('p-desc')?.value.trim();
+    const amount   = document.getElementById('p-amount')?.value.trim();
+    const level    = document.getElementById('p-level')?.value;
+    const field    = document.getElementById('p-field')?.value;
+    const country  = document.getElementById('p-country')?.value.trim();
+    const funding  = document.getElementById('p-funding')?.value;
+    const deadline = document.getElementById('p-deadline')?.value;
+    const eligibility = (document.getElementById('p-eligibility')?.value||'').split('\n').filter(Boolean);
+    const benefits    = (document.getElementById('p-benefits')?.value||'').split('\n').filter(Boolean);
+    const docs        = (document.getElementById('p-docs')?.value||'').split('\n').filter(Boolean);
+
+    if (!title||!level||!field||!country||!funding||!deadline) { SP.Toast.error('Please fill in all required fields'); return; }
+
+    try {
+      const s = await SP.apiFetch('/scholarships', { method:'POST', body: JSON.stringify({ title, description:desc, amount, level, field, country, fundingType:funding, deadline, eligibility, benefits, requiredDocs:docs }) });
+      myScholarships.unshift(s);
+      SP.Toast.success('✓ Scholarship published successfully!');
+      setTimeout(() => showPanel('scholarships', null), 1000);
+    } catch (e) { SP.Toast.error(e.message||'Failed to publish. Please try again.'); }
+  }
+
+  init();
+</script>
+</body>
+</html>

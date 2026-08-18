@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Eligibility Matcher — ScholarPath</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/main.css">
+  <style>
+    .matcher-hero{background:linear-gradient(135deg,#0a2a45,#123E63);padding:52px 0;text-align:center}
+    .matcher-hero h1{font-size:2.2rem;font-weight:800;color:#fff;margin-bottom:10px}
+    .matcher-hero p{color:rgba(255,255,255,.72);font-size:1rem;max-width:520px;margin:0 auto}
+    .matcher-layout{max-width:960px;margin:0 auto;padding:36px 24px}
+    .matcher-form{background:#fff;border-radius:var(--radius);padding:32px;box-shadow:var(--card-shadow);margin-bottom:28px}
+    .matcher-form h3{font-size:1.1rem;font-weight:700;color:var(--blue);margin-bottom:22px;display:flex;align-items:center;gap:8px}
+    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+    .match-btn{background:var(--blue);color:#fff;border:none;padding:15px 44px;border-radius:30px;font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;cursor:pointer;transition:all .25s;margin-top:22px;display:inline-flex;align-items:center;gap:8px}
+    .match-btn:hover{background:var(--blue-light);transform:translateY(-2px);box-shadow:0 8px 28px rgba(18,62,99,.25)}
+    .match-btn:disabled{opacity:.6;cursor:not-allowed;transform:none}
+    .results-section{margin-top:8px}
+    .results-header{margin-bottom:20px}
+    .results-header h2{font-size:1.3rem;font-weight:800;color:var(--blue)}
+    .results-header p{font-size:.88rem;color:var(--text-muted);margin-top:4px}
+    .match-card{background:#fff;border-radius:var(--radius);padding:22px;box-shadow:var(--card-shadow);margin-bottom:14px;border-left:5px solid;cursor:pointer;transition:all .2s}
+    .match-card:hover{transform:translateX(4px)}
+    .match-card.high{border-left-color:var(--teal)}
+    .match-card.mid{border-left-color:var(--yellow)}
+    .match-card.low{border-left-color:var(--border)}
+    .match-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+    .match-org{display:flex;align-items:center;gap:10px}
+    .match-logo{width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:800;color:#fff;flex-shrink:0}
+    .match-title{font-weight:700;font-size:.95rem;color:var(--blue)}
+    .match-sub{font-size:.78rem;color:var(--text-muted);margin-top:2px}
+    .match-pct{font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800;line-height:1}
+    .pct-high{color:var(--teal)}
+    .pct-mid{color:#c89600}
+    .pct-low{color:var(--text-muted)}
+    .match-bar-track{height:7px;background:#f0f4f7;border-radius:10px;overflow:hidden;margin:10px 0}
+    .match-bar-fill{height:100%;border-radius:10px;transition:width 1s ease}
+    .fill-high{background:var(--teal)}
+    .fill-mid{background:var(--yellow)}
+    .fill-low{background:var(--border)}
+    .match-reason{font-size:.83rem;color:var(--text-muted);margin-top:6px;line-height:1.55}
+    .match-tags{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+    .conf-tag{font-size:.72rem;font-weight:700;padding:3px 9px;border-radius:8px}
+    .conf-high{background:#e1f5f7;color:#177b83}
+    .conf-mid{background:#fef8e1;color:#8a6800}
+    .conf-low{background:var(--bg);color:var(--text-muted)}
+    .loading-overlay{text-align:center;padding:48px;background:#fff;border-radius:var(--radius);box-shadow:var(--card-shadow)}
+    .step-indicator{display:flex;gap:0;margin-bottom:28px;background:var(--bg);border-radius:12px;padding:4px}
+    .step-tab{flex:1;text-align:center;padding:10px;border-radius:9px;font-size:.85rem;font-weight:600;color:var(--text-muted);transition:all .2s;cursor:default}
+    .step-tab.done{color:var(--teal)}
+    .step-tab.active{background:#fff;color:var(--blue);box-shadow:0 2px 8px rgba(18,62,99,.1)}
+    @media(max-width:640px){.form-grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+<div id="navbar-placeholder"></div>
+
+<div class="matcher-hero">
+  <div class="section-label" style="color:var(--yellow)">AI-Powered</div>
+  <h1>Eligibility Matcher</h1>
+  <p>Tell us about yourself and our AI will instantly rank the scholarships you're most eligible for — with match percentages and explanations.</p>
+</div>
+
+<div class="matcher-layout">
+  <div class="matcher-form">
+    <h3>🎓 Your Academic Profile</h3>
+    <div class="step-indicator">
+      <div class="step-tab active" id="step1">1. Your Details</div>
+      <div class="step-tab" id="step2">2. Preferences</div>
+      <div class="step-tab" id="step3">3. Results</div>
+    </div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="form-label">Country of Origin *</label>
+        <select class="form-control" id="m-country">
+          <option value="Nigeria">Nigeria</option>
+          <option value="Ghana">Ghana</option>
+          <option value="Kenya">Kenya</option>
+          <option value="South Africa">South Africa</option>
+          <option value="India">India</option>
+          <option value="Pakistan">Pakistan</option>
+          <option value="Bangladesh">Bangladesh</option>
+          <option value="Ethiopia">Ethiopia</option>
+          <option value="Tanzania">Tanzania</option>
+          <option value="Uganda">Uganda</option>
+          <option value="Cameroon">Cameroon</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">GPA / Grade *</label>
+        <select class="form-control" id="m-gpa">
+          <option value="4.0">4.0 / First Class Honours</option>
+          <option value="3.7">3.5–3.9 / Upper Second (2:1)</option>
+          <option value="3.2">3.0–3.4 / Lower Second (2:2)</option>
+          <option value="2.7">Below 3.0 / Third Class</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Level of Study *</label>
+        <select class="form-control" id="m-level">
+          <option value="Undergraduate">Undergraduate</option>
+          <option value="Masters">Masters</option>
+          <option value="PhD">PhD / Doctorate</option>
+          <option value="Postdoctoral">Postdoctoral Research</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Field of Study *</label>
+        <select class="form-control" id="m-field">
+          <option value="Computer Science">Computer Science / IT</option>
+          <option value="Economics">Economics / Finance</option>
+          <option value="Engineering">Engineering</option>
+          <option value="Medicine">Medicine / Public Health</option>
+          <option value="Business">Business / Management</option>
+          <option value="Law">Law</option>
+          <option value="Social Sciences">Social Sciences</option>
+          <option value="Arts & Humanities">Arts &amp; Humanities</option>
+          <option value="Natural Sciences">Natural Sciences</option>
+          <option value="Education">Education</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Preferred Study Destination *</label>
+        <select class="form-control" id="m-dest">
+          <option value="UK">United Kingdom</option>
+          <option value="USA">United States</option>
+          <option value="Canada">Canada</option>
+          <option value="Germany">Germany</option>
+          <option value="Australia">Australia</option>
+          <option value="Netherlands">Netherlands</option>
+          <option value="France">France</option>
+          <option value="Any Country">Any Country</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Funding Preference</label>
+        <select class="form-control" id="m-funding">
+          <option value="Fully Funded">Fully Funded Only</option>
+          <option value="Partial">Partial Funding OK</option>
+          <option value="Any">Any Funding Type</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group" style="margin-top:4px">
+      <label class="form-label">Skills &amp; Interests <span style="font-weight:400;color:var(--text-muted)">(optional — improves accuracy)</span></label>
+      <input class="form-control" id="m-skills" placeholder="e.g. Research, Leadership, Community Development, Entrepreneurship, Data Science…">
+    </div>
+    <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+      <button class="match-btn" id="match-btn" onclick="runMatcher()">⚡ Find My Matches</button>
+      <span style="font-size:.83rem;color:var(--text-muted)">Takes about 5 seconds · Checks 500+ scholarships</span>
+    </div>
+  </div>
+
+  <div id="match-results"></div>
+</div>
+
+<div id="footer-placeholder"></div>
+<div id="toast-container"></div>
+<script src="../js/components.js"></script>
+<script src="../js/app.js"></script>
+<script>
+const SCHOLARSHIP_DATA = [
+  {_id:'1',title:'Commonwealth Masters Scholarship',orgName:'Commonwealth Secretariat',orgColor:'#123E63',level:'Masters',field:'Any',country:'UK',fundingType:'Fully Funded',amount:'£28,000/yr',deadline:new Date(Date.now()+45*86400000)},
+  {_id:'2',title:'Gates Cambridge Scholarship',orgName:'Gates Foundation',orgColor:'#1a5a8a',level:'PhD',field:'Any',country:'UK',fundingType:'Fully Funded',amount:'£50,000/yr',deadline:new Date(Date.now()+12*86400000)},
+  {_id:'3',title:'Chevening Scholarship',orgName:'UK Foreign Office',orgColor:'#c0392b',level:'Masters',field:'Any',country:'UK',fundingType:'Fully Funded',amount:'£25,000/yr',deadline:new Date(Date.now()+28*86400000)},
+  {_id:'4',title:'DAAD Scholarship Germany',orgName:'DAAD',orgColor:'#3EC1C9',level:'Masters',field:'Engineering',country:'Germany',fundingType:'Fully Funded',amount:'€1,000/mo',deadline:new Date(Date.now()+35*86400000)},
+  {_id:'5',title:'Fulbright Foreign Student Program',orgName:'U.S. State Department',orgColor:'#2c3e50',level:'Masters',field:'Any',country:'USA',fundingType:'Fully Funded',amount:'$40,000/yr',deadline:new Date(Date.now()+90*86400000)},
+  {_id:'6',title:'Mastercard Foundation Scholars',orgName:'Mastercard Foundation',orgColor:'#FF8A1F',level:'Undergraduate',field:'Business & STEM',country:'Various',fundingType:'Fully Funded',amount:'$35,000',deadline:new Date(Date.now()+60*86400000)},
+];
+
+function localMatch(country, gpa, level, field, dest, funding) {
+  return SCHOLARSHIP_DATA.map(s => {
+    let score = 0;
+    // Level (30pts)
+    if (s.level==='Any'||s.level===level) score+=30; else score+=5;
+    // Field (25pts)
+    const fm = s.field==='Any'||s.field.toLowerCase().includes(field.toLowerCase())||field.toLowerCase().includes(s.field.toLowerCase());
+    if (fm) score+=25; else score+=5;
+    // Destination (20pts)
+    if (dest==='Any Country'||s.country.toLowerCase().includes(dest.toLowerCase())||dest.toLowerCase().includes(s.country.toLowerCase())||s.country==='Various') score+=20; else score+=5;
+    // Funding (15pts)
+    if (funding==='Any'||s.fundingType===funding) score+=15; else score+=8;
+    // GPA (10pts)
+    if (gpa>=3.5) score+=10; else if (gpa>=3.0) score+=5;
+    const pct = Math.min(99, score);
+    const conf = pct>=80?'high':pct>=60?'medium':'low';
+    const reasons = [`${s.level==='Any'||s.level===level?'Level matches':'Different study level'}`,'·',`${fm?'Field aligns':'Different field'}`,'·',`${dest==='Any Country'||s.country==='Various'?'Destination matches':'Check destination'}`];
+    return { scholarship:s, pct, confidence:conf, reason:`${reasons.filter(r=>r!=='·').join(' · ')} · Award: ${s.amount}` };
+  }).sort((a,b)=>b.pct-a.pct);
+}
+
+async function runMatcher() {
+  const country  = document.getElementById('m-country').value;
+  const gpaStr   = document.getElementById('m-gpa').value;
+  const level    = document.getElementById('m-level').value;
+  const field    = document.getElementById('m-field').value;
+  const dest     = document.getElementById('m-dest').value;
+  const funding  = document.getElementById('m-funding').value;
+  const skills   = document.getElementById('m-skills').value;
+  const gpa      = parseFloat(gpaStr);
+
+  const btn = document.getElementById('match-btn');
+  btn.disabled = true; btn.innerHTML = '<div class="spinner" style="width:18px;height:18px;border-width:2px;display:inline-block;vertical-align:middle;margin-right:8px"></div> Matching…';
+
+  ['step1','step2'].forEach(id => { document.getElementById(id).classList.remove('active'); document.getElementById(id).classList.add('done'); });
+  document.getElementById('step3').classList.add('active');
+
+  document.getElementById('match-results').innerHTML = `
+    <div class="loading-overlay">
+      <div class="spinner" style="margin:0 auto 18px"></div>
+      <h3 style="color:var(--blue);margin-bottom:6px">Analysing your profile…</h3>
+      <p style="color:var(--text-muted);font-size:.9rem">Checking eligibility across 500+ scholarships</p>
+    </div>`;
+
+  let results = [];
+
+  // Try backend first
+  try {
+    const data = await SP.apiFetch('/scholarships/match', {
+      method:'POST',
+      body: JSON.stringify({ country, gpa, level, field, destination:dest, fundingType:funding, skills })
+    });
+    results = data.map(d => ({
+      scholarship: d.scholarship,
+      pct: d.pct,
+      confidence: d.confidence,
+      reason: d.reasons?.join(' · ') || `${d.scholarship?.field||''} match`
+    }));
+  } catch {
+    // Fallback: try Claude API for intelligent reasoning
+    try {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({
+          model:'claude-sonnet-4-20250514',
+          max_tokens:1000,
+          messages:[{role:'user',content:`You are a scholarship eligibility expert. A student has this profile:
+- Country: ${country}
+- GPA: ${gpa}
+- Study Level: ${level}
+- Field: ${field}
+- Preferred Destination: ${dest}
+- Funding Preference: ${funding}
+- Skills/Interests: ${skills||'Not specified'}
+
+Rate each of these scholarships out of 99 for eligibility match. Return ONLY a JSON array, no markdown:
+${JSON.stringify(SCHOLARSHIP_DATA.map(s=>({id:s._id,title:s.title,level:s.level,field:s.field,country:s.country,fundingType:s.fundingType})))}
+
+Format: [{"id":"1","pct":94,"confidence":"high","reason":"Short one-sentence reason"}]`}]
+        })
+      });
+      const d = await res.json();
+      const raw = d.content[0].text.replace(/```json|```/g,'').trim();
+      const matches = JSON.parse(raw);
+      results = matches.map(m => {
+        const s = SCHOLARSHIP_DATA.find(x=>x._id===m.id);
+        return { scholarship:s, pct:m.pct, confidence:m.confidence, reason:m.reason };
+      }).filter(r=>r.scholarship).sort((a,b)=>b.pct-a.pct);
+    } catch {
+      // Final fallback: local algorithm
+      results = localMatch(country, gpa, level, field, dest, funding);
+    }
+  }
+
+  renderResults(results, { country, level, field, dest });
+  btn.disabled = false; btn.innerHTML = '⚡ Re-run Match';
+}
+
+function renderResults(results, profile) {
+  if (!results.length) {
+    document.getElementById('match-results').innerHTML = '<div class="loading-overlay"><p style="color:var(--text-muted)">No results found. Try broadening your filters.</p></div>';
+    return;
+  }
+  const html = `
+  <div class="results-section">
+    <div class="results-header">
+      <h2>Your Scholarship Matches</h2>
+      <p>Ranked by AI-calculated eligibility for <strong>${profile.level}</strong> in <strong>${profile.field}</strong> → <strong>${profile.dest}</strong></p>
+    </div>
+    ${results.map((r,i) => {
+      const s = r.scholarship; if(!s) return '';
+      const tier = r.pct>=80?'high':r.pct>=60?'mid':'low';
+      const days = SP.daysUntil(s.deadline);
+      return `
+      <div class="match-card ${tier}" onclick="window.location='scholarship.html?id=${s._id}'">
+        <div class="match-top">
+          <div class="match-org">
+            <div class="match-logo" style="background:${s.orgColor||'#123E63'}">${(s.orgName||'ORG').substring(0,2).toUpperCase()}</div>
+            <div>
+              <div class="match-title">${s.title}</div>
+              <div class="match-sub">${s.orgName} · ${s.country} · ${s.amount}</div>
+            </div>
+          </div>
+          <div style="text-align:right">
+            <div class="match-pct pct-${tier}">${r.pct}%</div>
+            <div style="font-size:.72rem;color:var(--text-muted)">match</div>
+          </div>
+        </div>
+        <div class="match-bar-track"><div class="match-bar-fill fill-${tier}" style="width:${r.pct}%"></div></div>
+        <p class="match-reason">${r.reason}</p>
+        <div class="match-tags">
+          <span class="tag tag-blue">${s.level}</span>
+          <span class="tag tag-orange">${s.fundingType}</span>
+          <span class="conf-tag conf-${tier==='mid'?'mid':tier}">${r.confidence||tier} confidence</span>
+          <span class="deadline-badge ${SP.deadlineClass(days)}" style="font-size:.72rem">${SP.deadlineLabel(days)}</span>
+          ${i===0?'<span style="background:#fff3e5;color:var(--orange);border-radius:8px;padding:3px 9px;font-size:.72rem;font-weight:700">🏆 Top Match</span>':''}
+        </div>
+      </div>`;
+    }).join('')}
+    <div style="text-align:center;margin-top:28px">
+      <a href="find.html" class="btn btn-secondary">Browse All Scholarships →</a>
+    </div>
+  </div>`;
+  document.getElementById('match-results').innerHTML = html;
+  // Animate bars
+  setTimeout(()=>{
+    document.querySelectorAll('.match-bar-fill').forEach(bar => {
+      const w = bar.style.width; bar.style.width='0'; setTimeout(()=>bar.style.width=w, 50);
+    });
+  }, 100);
+}
+</script>
+</body>
+</html>

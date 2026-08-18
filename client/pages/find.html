@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Find Scholarships — ScholarPath</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/main.css">
+  <style>
+    .search-hero{background:var(--blue);padding:44px 0 32px}
+    .search-hero h1{font-size:2rem;font-weight:800;color:#fff;margin-bottom:6px}
+    .search-hero p{color:rgba(255,255,255,.7);margin-bottom:22px}
+    .search-bar{display:flex;background:#fff;border-radius:32px;overflow:hidden;box-shadow:0 8px 36px rgba(0,0,0,.22)}
+    .search-bar input{flex:1;border:none;padding:15px 22px;font-size:.95rem;font-family:inherit;outline:none;color:var(--text)}
+    .search-bar select{border:none;border-left:1px solid var(--border);padding:13px 14px;font-size:.86rem;font-family:inherit;outline:none;background:#fff;cursor:pointer;color:var(--text-muted)}
+    .search-bar button{background:var(--orange);color:#fff;border:none;padding:13px 26px;font-size:.92rem;font-weight:700;font-family:'Syne',sans-serif;cursor:pointer;transition:background .2s}
+    .search-bar button:hover{background:var(--orange-light)}
+    .filter-strip{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+    .fpill{background:rgba(255,255,255,.14);color:rgba(255,255,255,.82);border:1px solid rgba(255,255,255,.2);border-radius:20px;padding:5px 14px;font-size:.8rem;cursor:pointer;transition:all .18s}
+    .fpill:hover,.fpill.active{background:#fff;color:var(--blue)}
+    /* Layout */
+    .find-layout{max-width:1100px;margin:0 auto;padding:32px 24px;display:grid;grid-template-columns:240px 1fr;gap:28px}
+    /* Sidebar filters */
+    .filter-sidebar{background:#fff;border-radius:var(--radius);padding:22px;box-shadow:var(--card-shadow);height:fit-content;position:sticky;top:80px}
+    .filter-sidebar h3{font-size:1rem;font-weight:700;color:var(--blue);margin-bottom:16px}
+    .filter-group{margin-bottom:20px}
+    .filter-group label{font-size:.82rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.8px;display:block;margin-bottom:8px}
+    .filter-group select,.filter-group input{width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:.85rem;font-family:inherit;background:#fff;color:var(--text);outline:none;transition:border .2s}
+    .filter-group select:focus,.filter-group input:focus{border-color:var(--teal)}
+    .check-filter{display:flex;align-items:center;gap:8px;margin-bottom:6px;cursor:pointer;font-size:.87rem;color:var(--text)}
+    .check-filter input{accent-color:var(--teal);width:15px;height:15px}
+    .apply-filter-btn{width:100%;background:var(--blue);color:#fff;border:none;padding:11px;border-radius:10px;font-weight:600;font-family:inherit;cursor:pointer;transition:all .2s}
+    .apply-filter-btn:hover{background:var(--blue-light)}
+    .clear-filter{width:100%;background:none;border:1.5px solid var(--border);color:var(--text-muted);padding:9px;border-radius:10px;font-size:.85rem;font-family:inherit;cursor:pointer;margin-top:8px;transition:all .18s}
+    .clear-filter:hover{border-color:var(--teal);color:var(--teal)}
+    /* Results */
+    .results-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;flex-wrap:wrap;gap:12px}
+    .results-top h2{font-size:1.2rem;font-weight:800;color:var(--blue)}
+    .sort-row{display:flex;gap:10px;align-items:center}
+    .sort-row label{font-size:.84rem;color:var(--text-muted)}
+    .sort-row select{padding:8px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:.84rem;font-family:inherit;background:#fff;color:var(--text);outline:none}
+    .cards-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
+    .load-more-wrap{text-align:center;margin-top:36px}
+    .pagination{display:flex;gap:6px;justify-content:center;margin-top:32px;flex-wrap:wrap}
+    .page-btn{background:#fff;border:1.5px solid var(--border);border-radius:8px;padding:8px 14px;font-size:.85rem;font-weight:600;color:var(--blue);cursor:pointer;transition:all .18s}
+    .page-btn:hover,.page-btn.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+    .empty-state{text-align:center;padding:60px 20px;color:var(--text-muted);grid-column:1/-1}
+    .empty-state .emoji{font-size:3rem;margin-bottom:14px}
+    .empty-state h3{font-size:1.1rem;font-weight:700;color:var(--blue);margin-bottom:8px}
+    @media(max-width:820px){.find-layout{grid-template-columns:1fr}.filter-sidebar{display:none}.cards-grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+<div id="navbar-placeholder"></div>
+
+<div class="search-hero">
+  <div class="section-inner">
+    <h1>Find Scholarships</h1>
+    <p>Discover 500+ opportunities filtered for you</p>
+    <div class="search-bar">
+      <input type="text" id="kw-input" placeholder="Search by keyword, organisation, or country…">
+      <select id="field-input">
+        <option value="">All Fields</option>
+        <option>STEM</option><option>Business</option><option>Medicine</option>
+        <option>Arts & Humanities</option><option>Law</option><option>Social Sciences</option>
+      </select>
+      <button onclick="doSearch()">Search</button>
+    </div>
+    <div class="filter-strip" id="level-strip">
+      <span class="fpill active" data-level="">All Levels</span>
+      <span class="fpill" data-level="Undergraduate">Undergraduate</span>
+      <span class="fpill" data-level="Masters">Masters</span>
+      <span class="fpill" data-level="PhD">PhD</span>
+    </div>
+  </div>
+</div>
+
+<div class="find-layout">
+  <!-- Sidebar Filters -->
+  <aside class="filter-sidebar">
+    <h3>🔎 Filters</h3>
+    <div class="filter-group">
+      <label>Country / Region</label>
+      <select id="f-country">
+        <option value="">Any Country</option>
+        <option>UK</option><option>USA</option><option>Canada</option>
+        <option>Germany</option><option>Australia</option><option>Netherlands</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Funding Type</label>
+      <label class="check-filter"><input type="checkbox" id="f-full"> Fully Funded</label>
+      <label class="check-filter"><input type="checkbox" id="f-partial"> Partial Funding</label>
+      <label class="check-filter"><input type="checkbox" id="f-stipend"> Stipend Only</label>
+    </div>
+    <div class="filter-group">
+      <label>Deadline Within</label>
+      <select id="f-deadline">
+        <option value="">Any Time</option>
+        <option value="7">Next 7 days</option>
+        <option value="14">Next 2 weeks</option>
+        <option value="30">Next 30 days</option>
+        <option value="90">Next 3 months</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Min Award ($)</label>
+      <input type="number" id="f-min-award" placeholder="e.g. 10000">
+    </div>
+    <button class="apply-filter-btn" onclick="doSearch()">Apply Filters</button>
+    <button class="clear-filter" onclick="clearFilters()">Clear All</button>
+  </aside>
+
+  <!-- Results -->
+  <main>
+    <div class="results-top">
+      <div>
+        <h2 id="result-count">Loading scholarships…</h2>
+        <div style="font-size:.83rem;color:var(--text-muted);margin-top:3px" id="result-sub"></div>
+      </div>
+      <div class="sort-row">
+        <label>Sort by</label>
+        <select id="sort-select" onchange="doSearch()">
+          <option value="createdAt">Most Recent</option>
+          <option value="deadline">Deadline Soon</option>
+          <option value="views">Most Popular</option>
+        </select>
+        <a href="../pages/matcher.html" class="btn btn-secondary btn-sm">⚡ Match Me</a>
+      </div>
+    </div>
+    <div class="cards-grid" id="results-grid">
+      <div style="grid-column:1/-1;text-align:center;padding:48px">
+        <div class="spinner" style="margin:0 auto 16px"></div>
+        <p style="color:var(--text-muted)">Finding scholarships…</p>
+      </div>
+    </div>
+    <div class="pagination" id="pagination"></div>
+  </main>
+</div>
+
+<div id="footer-placeholder"></div>
+<div id="toast-container"></div>
+<script src="../js/components.js"></script>
+<script src="../js/app.js"></script>
+<script>
+  let currentPage = 1;
+  const params = new URLSearchParams(location.search);
+  if (params.get('keyword')) document.getElementById('kw-input').value = params.get('keyword');
+  if (params.get('field'))   document.getElementById('field-input').value = params.get('field');
+
+  // Level filter pills
+  document.querySelectorAll('#level-strip .fpill').forEach(p => {
+    p.addEventListener('click', () => {
+      document.querySelectorAll('#level-strip .fpill').forEach(x => x.classList.remove('active'));
+      p.classList.add('active');
+      currentPage = 1;
+      doSearch();
+    });
+  });
+
+  async function doSearch(page = 1) {
+    currentPage = page;
+    const kw      = document.getElementById('kw-input').value;
+    const field   = document.getElementById('field-input').value;
+    const country = document.getElementById('f-country').value;
+    const sort    = document.getElementById('sort-select').value;
+    const level   = document.querySelector('#level-strip .fpill.active')?.dataset.level || '';
+    const fundingTypes = [];
+    if (document.getElementById('f-full')?.checked)    fundingTypes.push('Fully Funded');
+    if (document.getElementById('f-partial')?.checked) fundingTypes.push('Partial');
+    if (document.getElementById('f-stipend')?.checked) fundingTypes.push('Stipend Only');
+
+    const qs = new URLSearchParams({ page, limit: 12, sort });
+    if (kw)      qs.set('keyword', kw);
+    if (field)   qs.set('field', field);
+    if (country) qs.set('country', country);
+    if (level)   qs.set('level', level);
+    if (fundingTypes.length === 1) qs.set('fundingType', fundingTypes[0]);
+
+    document.getElementById('results-grid').innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:48px"><div class="spinner" style="margin:0 auto 16px"></div><p style="color:var(--text-muted)">Searching…</p></div>';
+
+    try {
+      const data = await SP.apiFetch(`/scholarships?${qs}`);
+      renderResults(data);
+    } catch {
+      // Fallback static scholarships
+      const fallback = getFallback(kw, level, country);
+      renderResults({ scholarships: fallback, total: fallback.length, pages: 1, current: 1 });
+    }
+  }
+
+  function renderResults({ scholarships, total, pages, current }) {
+    const grid = document.getElementById('results-grid');
+    document.getElementById('result-count').textContent = `${total} Scholarship${total !== 1 ? 's' : ''} Found`;
+    document.getElementById('result-sub').textContent = pages > 1 ? `Page ${current} of ${pages}` : '';
+
+    if (!scholarships.length) {
+      grid.innerHTML = '<div class="empty-state"><div class="emoji">🔍</div><h3>No results found</h3><p>Try adjusting your filters or search terms.</p></div>';
+      document.getElementById('pagination').innerHTML = '';
+      return;
+    }
+    grid.innerHTML = scholarships.map(s => SP.renderScholarshipCard(s, false)).join('');
+
+    // Pagination
+    const pg = document.getElementById('pagination');
+    if (pages > 1) {
+      let btns = '';
+      if (current > 1) btns += `<button class="page-btn" onclick="doSearch(${current-1})">← Prev</button>`;
+      for (let i = 1; i <= pages; i++) btns += `<button class="page-btn ${i===current?'active':''}" onclick="doSearch(${i})">${i}</button>`;
+      if (current < pages) btns += `<button class="page-btn" onclick="doSearch(${current+1})">Next →</button>`;
+      pg.innerHTML = btns;
+    } else pg.innerHTML = '';
+  }
+
+  function clearFilters() {
+    ['kw-input','field-input','f-country','f-deadline','f-min-award'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+    ['f-full','f-partial','f-stipend'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.checked = false;
+    });
+    document.querySelectorAll('#level-strip .fpill').forEach((p,i) => p.classList.toggle('active', i===0));
+    doSearch();
+  }
+
+  function getFallback(kw, level, country) {
+    const all = [
+      {_id:'1',title:'Commonwealth Masters Scholarship',orgName:'Commonwealth Secretariat',country:'UK',level:'Masters',field:'Any',fundingType:'Fully Funded',amount:'£28,000/yr',deadline:new Date(Date.now()+45*86400000),description:'Full scholarships for postgraduate students from Commonwealth countries to study in the UK.',orgColor:'#123E63'},
+      {_id:'2',title:'Gates Cambridge Scholarship',orgName:'Gates Foundation',country:'UK',level:'PhD',field:'Any',fundingType:'Fully Funded',amount:'£50,000/yr',deadline:new Date(Date.now()+12*86400000),description:'Prestigious full-cost awards for outstanding applicants from outside the UK.',orgColor:'#1a5a8a'},
+      {_id:'3',title:'Chevening Scholarship',orgName:'UK Foreign Office',country:'UK',level:'Masters',field:'Any',fundingType:'Fully Funded',amount:'£25,000/yr',deadline:new Date(Date.now()+28*86400000),description:'Chevening scholarships fund one year taught Masters degree at any UK university.',orgColor:'#c0392b'},
+      {_id:'4',title:'DAAD Germany Scholarship',orgName:'DAAD',country:'Germany',level:'Masters',field:'Engineering',fundingType:'Fully Funded',amount:'€1,000/mo',deadline:new Date(Date.now()+35*86400000),description:'DAAD scholarships for international engineering and science students at German universities.',orgColor:'#3EC1C9'},
+      {_id:'5',title:'Fulbright Foreign Student Program',orgName:'U.S. State Dept',country:'USA',level:'Masters',field:'Any',fundingType:'Fully Funded',amount:'$40,000/yr',deadline:new Date(Date.now()+90*86400000),description:'The Fulbright Program offers grants to study, research, or teach in the United States.',orgColor:'#2c3e50'},
+      {_id:'6',title:'Mastercard Foundation Scholars',orgName:'Mastercard Foundation',country:'Various',level:'Undergraduate',field:'Business & STEM',fundingType:'Fully Funded',amount:'$35,000',deadline:new Date(Date.now()+60*86400000),description:'Supporting academically talented yet economically disadvantaged young Africans.',orgColor:'#FF8A1F'},
+    ];
+    return all.filter(s =>
+      (!kw || s.title.toLowerCase().includes(kw.toLowerCase()) || s.orgName.toLowerCase().includes(kw.toLowerCase())) &&
+      (!level || s.level === level) &&
+      (!country || s.country.toLowerCase().includes(country.toLowerCase()))
+    );
+  }
+
+  document.getElementById('kw-input').addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
+  doSearch();
+</script>
+</body>
+</html>
