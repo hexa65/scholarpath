@@ -2,7 +2,7 @@
    app.js — Shared utilities for ScholarPath frontend
 ───────────────────────────────────────────────────────── */
 
-const API = window.SP_API_BASE || 'https://scholarpath-api.onrender.com/api';
+const API = window.SP_API_BASE || 'https://scholarpath-yq96.onrender.com/api';
 
 // ── Auth helpers ────────────────────────────────────────
 const Auth = {
