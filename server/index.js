@@ -57,4 +57,3 @@ mongoose.connect(process.env.MONGO_URI)
     httpServer.listen(PORT, () => console.log(`Server running on port ${PORT}`));
   })
   .catch(err => { console.error('DB error:', err); process.exit(1); });
-app.get('/api/seed-now', require('./utils/seed'));
