@@ -100,3 +100,28 @@ exports.getMe = async (req, res, next) => {
     res.json(user.toSafeJSON());
   } catch (err) { next(err); }
 };
+
+await sendEmail({
+  to: email,
+  subject: 'Verify your ScholarPath account',
+  html: `
+    <div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto">
+      <h2 style="color:#123E63">Welcome to ScholarPath! 🎓</h2>
+      <p>Hi ${name}, thanks for registering.</p>
+      <p>Click the button below to verify your email address:</p>
+      <a href="${process.env.CLIENT_URL}/pages/verify.html?token=${verifyToken}"
+        style="background:#FF8A1F;color:white;padding:12px 24px;
+        border-radius:20px;text-decoration:none;display:inline-block;
+        font-weight:bold;margin:16px 0">
+        Verify My Email →
+      </a>
+      <p style="color:#666;font-size:13px">
+        If the button doesn't work, copy this link:<br>
+        ${process.env.CLIENT_URL}/pages/verify.html?token=${verifyToken}
+      </p>
+      <p style="color:#666;font-size:13px">
+        This link expires in 24 hours.
+      </p>
+    </div>
+  `
+});
