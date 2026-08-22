@@ -311,7 +311,7 @@ const scholarships = [
       "Citizen of a developing or newly industrialised country",
       "Hold a bachelor's degree in a relevant field",
       "Minimum 2 years professional work experience",
-      "Above-average academic results",
+      "Above-average academic Results",
       "German or English language proficiency depending on course"
     ],
     benefits: [
@@ -1188,8 +1188,8 @@ async function bulkInsert() {
     }
 
     // Insert all at once
-    const result = await Scholarship.insertMany(scholarships);
-    console.log(`🎓 Successfully inserted ${result.length} verified scholarships!\n`);
+    const insertResult = await Scholarship.insertMany(scholarships);
+    console.log(`🎓 Successfully inserted ${insertResult.length} verified scholarships!\n`);
 
     // Summary by country
     const countries = {};
